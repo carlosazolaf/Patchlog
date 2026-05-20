@@ -269,7 +269,7 @@ export default function DiscoverPage() {
   <img
     src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
     alt="Patchlog"
-    className="w-8 h-8 object-contain"
+    className="w-14 h-14 object-contain scale-150"
   />
 
   <p className="text-sm tracking-[0.35em] uppercase text-[#4f4942]">
