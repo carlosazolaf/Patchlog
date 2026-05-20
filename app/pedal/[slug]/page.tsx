@@ -4,11 +4,16 @@ import { supabase } from '@/lib/supabase'
 export default async function PedalDetailPage({
   params
 }: {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }) {
-  const pedalId = Number(params.slug)
+  const resolvedParams =
+    await params
+
+  const pedalId = Number(
+    resolvedParams.slug
+  )
 
   const { data: pedal } = await supabase
     .from('pedals')
