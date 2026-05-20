@@ -427,7 +427,7 @@ export default function CollectionPage() {
               setTypeFilter('all')
               setSubtypeFilter('all')
             }}
-            className="bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
+            className="cursor-pointer bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
           >
             <option value="all">
               All Brands
@@ -563,7 +563,7 @@ export default function CollectionPage() {
                         'have'
                       )
                     }
-                    className={`text-xs px-3 py-2 rounded-full ${
+                    className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
                       pedal.status === 'have'
                         ? 'bg-black text-white'
                         : 'bg-white border border-[#d6cec2]'
@@ -579,7 +579,7 @@ export default function CollectionPage() {
                         'had'
                       )
                     }
-                    className={`text-xs px-3 py-2 rounded-full ${
+                    className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
                       pedal.status === 'had'
                         ? 'bg-black text-white'
                         : 'bg-white border border-[#d6cec2]'
@@ -595,7 +595,7 @@ export default function CollectionPage() {
                         'want'
                       )
                     }
-                    className={`text-xs px-3 py-2 rounded-full ${
+                    className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
                       pedal.status === 'want'
                         ? 'bg-black text-white'
                         : 'bg-white border border-[#d6cec2]'
@@ -610,7 +610,7 @@ export default function CollectionPage() {
                         pedal.pedal_id
                       )
                     }
-                    className="text-xs px-3 py-2 rounded-full bg-red-100 text-red-700"
+                    className="cursor-pointer text-xs px-3 py-2 rounded-full bg-red-100 text-red-700"
                   >
                     Remove
                   </button>
@@ -626,6 +626,7 @@ export default function CollectionPage() {
             <Link
               href="/discover"
               className="text-[#8c8479]"
+              cursor-pointer
             >
               Discover
             </Link>
@@ -633,6 +634,7 @@ export default function CollectionPage() {
             <Link
               href="/collection"
               className="text-black font-medium"
+              cursor-pointer
             >
               Collection
             </Link>
