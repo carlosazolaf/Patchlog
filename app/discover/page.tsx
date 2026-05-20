@@ -209,64 +209,76 @@ export default function DiscoverPage() {
     BUTTONS
   */
 
-  async function setStatus(
-    pedalId: number,
-    status: string
-  ) {
-    const existing = userPedals.find(
-      (p) =>
-        Number(p.pedal_id) ===
-        Number(pedalId)
-    )
+ async function setStatus(
+  pedalId: number,
+  status: string
+) {
+  console.log(
+    'SET STATUS',
+    pedalId,
+    status
+  )
 
-    /*
-      UPDATE
-    */
+  const existing = userPedals.find(
+    (p) =>
+      Number(p.pedal_id) ===
+      Number(pedalId)
+  )
 
-    if (existing) {
-      const { error } = await supabase
+  /*
+    UPDATE
+  */
+
+  if (existing) {
+    const { data, error } =
+      await supabase
         .from('user_pedals')
         .update({ status })
-        .eq('id', existing.id)
+        .eq('pedal_id', pedalId)
+        .select()
 
-      console.log('UPDATE', error)
-    }
+    console.log('UPDATE DATA', data)
+    console.log('UPDATE ERROR', error)
+  }
 
-    /*
-      INSERT
-    */
+  /*
+    INSERT
+  */
 
-    else {
-      const { error } = await supabase
+  else {
+    const { data, error } =
+      await supabase
         .from('user_pedals')
         .insert({
           pedal_id: pedalId,
           status
         })
+        .select()
 
-      console.log('INSERT', error)
-    }
-
-    /*
-      LOCAL STATE
-    */
-
-    setUserPedals((prev) => {
-      const filtered = prev.filter(
-        (p) =>
-          Number(p.pedal_id) !==
-          Number(pedalId)
-      )
-
-      return [
-        ...filtered,
-        {
-          pedal_id: pedalId,
-          status
-        }
-      ]
-    })
+    console.log('INSERT DATA', data)
+    console.log('INSERT ERROR', error)
   }
+
+  /*
+    LOCAL UI UPDATE
+  */
+
+  setUserPedals((prev) => {
+    const filtered = prev.filter(
+      (p) =>
+        Number(p.pedal_id) !==
+        Number(pedalId)
+    )
+
+    return [
+      ...filtered,
+      {
+        pedal_id: pedalId,
+        status
+      }
+    ]
+  })
+}
 
   /*
     MODELS
