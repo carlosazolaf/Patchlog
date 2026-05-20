@@ -15,7 +15,7 @@ export default async function PedalDetailPage({
   const { data: pedal } = await supabase
     .from('pedals')
     .select('*')
-    .eq('slug', params.slug)
+    .eq('pedal_od', Number(params.slug)
     .single()
 
   if (!pedal) {
