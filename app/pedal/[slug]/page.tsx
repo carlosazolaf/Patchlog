@@ -8,14 +8,12 @@ export default async function PedalDetailPage({
     slug: string
   }
 }) {
-  /*
-    PEDAL
-  */
+  const pedalId = Number(params.slug)
 
   const { data: pedal } = await supabase
     .from('pedals')
     .select('*')
-    .eq('pedal_od', Number(params.slug)
+    .eq('pedal_id', pedalId)
     .single()
 
   if (!pedal) {
@@ -26,19 +24,11 @@ export default async function PedalDetailPage({
     )
   }
 
-  /*
-    BRAND
-  */
-
   const { data: brand } = await supabase
     .from('brand')
     .select('*')
     .eq('brand_id', pedal.brand_id)
     .single()
-
-  /*
-    TYPE
-  */
 
   const { data: type } = await supabase
     .from('type')
@@ -46,22 +36,15 @@ export default async function PedalDetailPage({
     .eq('type_id', pedal.type_id)
     .single()
 
-  /*
-    SUBTYPE
-  */
-
-  const { data: subtype } = await supabase
-    .from('subtype')
-    .select('*')
-    .eq(
-      'subtype_id',
-      pedal.subtype_id
-    )
-    .single()
-
-  /*
-    COMMUNITY
-  */
+  const { data: subtype } =
+    await supabase
+      .from('subtype')
+      .select('*')
+      .eq(
+        'subtype_id',
+        pedal.subtype_id
+      )
+      .single()
 
   const { data: userPedals } =
     await supabase
@@ -91,7 +74,6 @@ export default async function PedalDetailPage({
   return (
     <main className="min-h-screen bg-[#f5f1ea] flex justify-center">
       <div className="w-full max-w-md px-5 py-8">
-        {/* BACK */}
         <div className="mb-8">
           <Link
             href="/discover"
@@ -101,7 +83,6 @@ export default async function PedalDetailPage({
           </Link>
         </div>
 
-        {/* IMAGE */}
         <div className="bg-[#f3efe8] rounded-[2rem] h-80 flex items-center justify-center mb-8">
           <img
             src={imageUrl}
@@ -110,17 +91,14 @@ export default async function PedalDetailPage({
           />
         </div>
 
-        {/* BRAND */}
         <p className="text-xs tracking-[0.35em] uppercase text-[#8d857a] mb-3">
           {brand?.brand}
         </p>
 
-        {/* NAME */}
         <h1 className="text-5xl font-serif text-[#171717] leading-none mb-8">
           {pedal.name}
         </h1>
 
-        {/* COMMUNITY */}
         <div className="grid grid-cols-3 gap-3 mb-8">
           <div className="bg-white rounded-2xl p-4 text-center">
             <p className="text-2xl font-serif">
@@ -153,7 +131,6 @@ export default async function PedalDetailPage({
           </div>
         </div>
 
-        {/* SPECS */}
         <div className="bg-white rounded-[2rem] p-6 space-y-4">
           <div>
             <p className="text-xs text-[#8d857a] mb-1">
@@ -191,38 +168,6 @@ export default async function PedalDetailPage({
 
             <p>
               {pedal.h_mm || 'Unknown'} mm
-            </p>
-          </div>
-
-          <div>
-            <p className="text-xs text-[#8d857a] mb-1">
-              Stereo
-            </p>
-
-            <p>
-              {pedal.stereo || 'Unknown'}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-xs text-[#8d857a] mb-1">
-              Analog / Digital
-            </p>
-
-            <p>
-              {pedal.analog_digital ||
-                'Unknown'}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-xs text-[#8d857a] mb-1">
-              Release Year
-            </p>
-
-            <p>
-              {pedal.release_year ||
-                'Unknown'}
             </p>
           </div>
         </div>
