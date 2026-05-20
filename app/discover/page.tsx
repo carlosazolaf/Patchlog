@@ -6,12 +6,12 @@ import { supabase } from '@/lib/supabase'
 
 export default function DiscoverPage() {
   const [pedals, setPedals] = useState<any[]>([])
+  const [userPedals, setUserPedals] =
+    useState<any[]>([])
+
   const [brands, setBrands] = useState<any[]>([])
   const [types, setTypes] = useState<any[]>([])
   const [subtypes, setSubtypes] =
-    useState<any[]>([])
-
-  const [userPedals, setUserPedals] =
     useState<any[]>([])
 
   /*
@@ -31,19 +31,11 @@ export default function DiscoverPage() {
     useState('all')
 
   /*
-    INITIAL LOAD
+    LOAD
   */
 
   useEffect(() => {
-    fetchInitialData()
-  }, [])
-
-  /*
-    PEDALS RELOAD
-  */
-
-  useEffect(() => {
-    fetchPedals()
+    fetchData()
   }, [
     brandFilter,
     modelFilter,
@@ -52,10 +44,61 @@ export default function DiscoverPage() {
   ])
 
   /*
-    LOAD STATIC TABLES
+    FETCH
   */
 
-  async function fetchInitialData() {
+  async function fetchData() {
+    /*
+      PEDALS
+    */
+
+    let pedalsQuery = supabase
+      .from('pedals')
+      .select('*')
+      .order('name', {
+        ascending: true
+      })
+      .limit(300)
+
+    /*
+      FILTERS
+    */
+
+    if (brandFilter !== 'all') {
+      pedalsQuery = pedalsQuery.eq(
+        'brand_id',
+        brandFilter
+      )
+    }
+
+    if (modelFilter !== 'all') {
+      pedalsQuery = pedalsQuery.eq(
+        'pedal_id',
+        modelFilter
+      )
+    }
+
+    if (typeFilter !== 'all') {
+      pedalsQuery = pedalsQuery.eq(
+        'type_id',
+        typeFilter
+      )
+    }
+
+    if (subtypeFilter !== 'all') {
+      pedalsQuery = pedalsQuery.eq(
+        'subtype_id',
+        subtypeFilter
+      )
+    }
+
+    const { data: pedalsData } =
+      await pedalsQuery
+
+    /*
+      LOOKUPS
+    */
+
     const { data: brandsData } =
       await supabase
         .from('brand')
@@ -80,76 +123,14 @@ export default function DiscoverPage() {
           ascending: true
         })
 
+    /*
+      USER PEDALS
+    */
+
     const { data: userPedalsData } =
       await supabase
         .from('user_pedals')
         .select('*')
-
-    setBrands(brandsData || [])
-    setTypes(typesData || [])
-    setSubtypes(subtypesData || [])
-    setUserPedals(userPedalsData || [])
-  }
-
-  /*
-    LOAD PEDALS
-  */
-
-  async function fetchPedals() {
-    let query = supabase
-      .from('pedals')
-      .select('*')
-      .order('name', {
-        ascending: true
-      })
-      .limit(300)
-
-    /*
-      BRAND
-    */
-
-    if (brandFilter !== 'all') {
-      query = query.eq(
-        'brand_id',
-        brandFilter
-      )
-    }
-
-    /*
-      MODEL
-    */
-
-    if (modelFilter !== 'all') {
-      query = query.eq(
-        'pedal_id',
-        modelFilter
-      )
-    }
-
-    /*
-      TYPE
-    */
-
-    if (typeFilter !== 'all') {
-      query = query.eq(
-        'type_id',
-        typeFilter
-      )
-    }
-
-    /*
-      SUBTYPE
-    */
-
-    if (subtypeFilter !== 'all') {
-      query = query.eq(
-        'subtype_id',
-        subtypeFilter
-      )
-    }
-
-    const { data: pedalsData } =
-      await query
 
     /*
       ENRICH
@@ -157,23 +138,30 @@ export default function DiscoverPage() {
 
     const enriched = (pedalsData || []).map(
       (pedal) => {
-        const brand = brands.find(
+        const brand = brandsData?.find(
           (b) =>
             Number(b.brand_id) ===
             Number(pedal.brand_id)
         )
 
-        const type = types.find(
+        const type = typesData?.find(
           (t) =>
             Number(t.type_id) ===
             Number(pedal.type_id)
         )
 
-        const subtype = subtypes.find(
+        const subtype = subtypesData?.find(
           (s) =>
             Number(s.subtype_id) ===
             Number(pedal.subtype_id)
         )
+
+        const userPedal =
+          userPedalsData?.find(
+            (u) =>
+              Number(u.pedal_id) ===
+              Number(pedal.pedal_id)
+          )
 
         return {
           ...pedal,
@@ -185,121 +173,24 @@ export default function DiscoverPage() {
             type?.type || '',
 
           subtype_name:
-            subtype?.subtype || ''
+            subtype?.subtype || '',
+
+          status:
+            userPedal?.status || ''
         }
       }
     )
 
     setPedals(enriched)
-  }
+    setUserPedals(userPedalsData || [])
 
-  /*
-    STATUS
-  */
+    /*
+      FILTERED TYPES
+    */
 
-  function getStatus(pedalId: number) {
-    return userPedals.find(
-      (p) =>
-        Number(p.pedal_id) ===
-        Number(pedalId)
-    )?.status
-  }
-
-  /*
-    BUTTONS
-  */
-
- async function setStatus(
-  pedalId: number,
-  status: string
-) {
-  console.log(
-    'SET STATUS',
-    pedalId,
-    status
-  )
-
-  const existing = userPedals.find(
-    (p) =>
-      Number(p.pedal_id) ===
-      Number(pedalId)
-  )
-
-  /*
-    UPDATE
-  */
-
-  if (existing) {
-    const { data, error } =
-      await supabase
-        .from('user_pedals')
-        .update({ status })
-        .eq('pedal_id', pedalId)
-        .select()
-
-    console.log('UPDATE DATA', data)
-    console.log('UPDATE ERROR', error)
-  }
-
-  /*
-    INSERT
-  */
-
-  else {
-    const { data, error } =
-      await supabase
-        .from('user_pedals')
-        .insert({
-          pedal_id: pedalId,
-          status
-        })
-        .select()
-
-    console.log('INSERT DATA', data)
-    console.log('INSERT ERROR', error)
-  }
-
-  /*
-    LOCAL UI UPDATE
-  */
-
-  setUserPedals((prev) => {
-    const filtered = prev.filter(
-      (p) =>
-        Number(p.pedal_id) !==
-        Number(pedalId)
-    )
-
-    return [
-      ...filtered,
-      {
-        pedal_id: pedalId,
-        status
-      }
-    ]
-  })
-}
-
-  /*
-    MODELS
-  */
-
-  const models = useMemo(() => {
-    return [...pedals].sort((a, b) =>
-      (a.name || '').localeCompare(
-        b.name || ''
-      )
-    )
-  }, [pedals])
-
-  /*
-    FILTERED TYPES
-  */
-
-  const filteredTypes = useMemo(() => {
-    const unique = [
+    const filteredTypes = [
       ...new Map(
-        pedals.map((p) => [
+        enriched.map((p) => [
           p.type_id,
           {
             type_id: p.type_id,
@@ -309,21 +200,13 @@ export default function DiscoverPage() {
       ).values()
     ]
 
-    return unique.sort((a, b) =>
-      (a.type || '').localeCompare(
-        b.type || ''
-      )
-    )
-  }, [pedals])
+    /*
+      FILTERED SUBTYPES
+    */
 
-  /*
-    FILTERED SUBTYPES
-  */
-
-  const filteredSubtypes = useMemo(() => {
-    const unique = [
+    const filteredSubtypes = [
       ...new Map(
-        pedals.map((p) => [
+        enriched.map((p) => [
           p.subtype_id,
           {
             subtype_id: p.subtype_id,
@@ -333,9 +216,60 @@ export default function DiscoverPage() {
       ).values()
     ]
 
-    return unique.sort((a, b) =>
-      (a.subtype || '').localeCompare(
-        b.subtype || ''
+    setBrands(brandsData || [])
+    setTypes(filteredTypes)
+    setSubtypes(filteredSubtypes)
+  }
+
+  /*
+    STATUS
+  */
+
+  async function setStatus(
+    pedalId: number,
+    status: string
+  ) {
+    const existing = userPedals.find(
+      (p) =>
+        Number(p.pedal_id) ===
+        Number(pedalId)
+    )
+
+    /*
+      UPDATE
+    */
+
+    if (existing) {
+      await supabase
+        .from('user_pedals')
+        .update({ status })
+        .eq('pedal_id', pedalId)
+    }
+
+    /*
+      INSERT
+    */
+
+    else {
+      await supabase
+        .from('user_pedals')
+        .insert({
+          pedal_id: pedalId,
+          status
+        })
+    }
+
+    fetchData()
+  }
+
+  /*
+    MODELS
+  */
+
+  const models = useMemo(() => {
+    return [...pedals].sort((a, b) =>
+      (a.name || '').localeCompare(
+        b.name || ''
       )
     )
   }, [pedals])
@@ -354,7 +288,7 @@ export default function DiscoverPage() {
           </h1>
 
           <p className="text-[#5e564c]">
-            Explore pedals and build your archive.
+            Explore the world of pedals.
           </p>
         </div>
 
@@ -370,7 +304,7 @@ export default function DiscoverPage() {
               setTypeFilter('all')
               setSubtypeFilter('all')
             }}
-            className="cursor-pointer bg-white border border-[#d6cec2] rounded-2xl px-4 py-4 text-[#171717]"
+            className="cursor-pointer bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
           >
             <option value="all">
               All Brands
@@ -392,7 +326,7 @@ export default function DiscoverPage() {
             onChange={(e) =>
               setModelFilter(e.target.value)
             }
-            className="bg-white border border-[#d6cec2] rounded-2xl px-4 py-4 text-[#171717]"
+            className="cursor-pointer bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
           >
             <option value="all">
               All Models
@@ -418,13 +352,13 @@ export default function DiscoverPage() {
               setTypeFilter(e.target.value)
               setSubtypeFilter('all')
             }}
-            className="bg-white border border-[#d6cec2] rounded-2xl px-4 py-4 text-[#171717]"
+            className="cursor-pointer bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
           >
             <option value="all">
               All Types
             </option>
 
-            {filteredTypes.map((type) => (
+            {types.map((type) => (
               <option
                 key={type.type_id}
                 value={type.type_id}
@@ -440,24 +374,20 @@ export default function DiscoverPage() {
             onChange={(e) =>
               setSubtypeFilter(e.target.value)
             }
-            className="bg-white border border-[#d6cec2] rounded-2xl px-4 py-4 text-[#171717]"
+            className="cursor-pointer bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
           >
             <option value="all">
               All Subtypes
             </option>
 
-            {filteredSubtypes.map(
-              (subtype) => (
-                <option
-                  key={subtype.subtype_id}
-                  value={
-                    subtype.subtype_id
-                  }
-                >
-                  {subtype.subtype}
-                </option>
-              )
-            )}
+            {subtypes.map((subtype) => (
+              <option
+                key={subtype.subtype_id}
+                value={subtype.subtype_id}
+              >
+                {subtype.subtype}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -466,98 +396,102 @@ export default function DiscoverPage() {
           {pedals.map((pedal) => {
             const imageUrl = `https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/pedal_images/${pedal.image_path}`
 
-            const status = getStatus(
-              pedal.pedal_id
-            )
-
             return (
               <Link
-  href={`/pedal/${pedal.slug}`}
-  key={pedal.pedal_id}
->
-                className="bg-[#fcfbf8] rounded-[2rem] p-4 border border-[#ebe6df]"
+                href={`/pedal/${pedal.slug}`}
+                key={pedal.pedal_id}
               >
-                {/* IMAGE */}
-                <div className="bg-[#f3efe8] rounded-[1.5rem] h-44 flex items-center justify-center mb-4">
-                  <img
-                    src={imageUrl}
-                    alt={pedal.name}
-                    className="h-32 object-contain"
-                  />
-                </Link>
+                <div className="bg-[#fcfbf8] rounded-[2rem] p-4 border border-[#ebe6df]">
+                  {/* IMAGE */}
+                  <div className="bg-[#f3efe8] rounded-[1.5rem] h-44 flex items-center justify-center mb-4">
+                    <img
+                      src={imageUrl}
+                      alt={pedal.name}
+                      className="h-32 object-contain"
+                    />
+                  </div>
 
-                {/* BRAND */}
-                <p className="text-[10px] uppercase tracking-[0.25em] text-[#8d857a] mb-2">
-                  {pedal.brand_name}
-                </p>
-
-                {/* NAME */}
-                <h2 className="text-2xl font-serif text-[#171717] leading-none mb-3">
-                  {pedal.name}
-                </h2>
-
-                {/* SPECS */}
-                <div className="mb-4 space-y-1">
-                  <p className="text-xs text-[#5e564c]">
-                    {pedal.type_name}
+                  {/* BRAND */}
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-[#8d857a] mb-2">
+                    {pedal.brand_name}
                   </p>
 
-                  <p className="text-xs text-[#8d857a]">
-                    {pedal.subtype_name}
-                  </p>
-                </div>
+                  {/* NAME */}
+                  <h2 className="text-2xl font-serif text-[#171717] leading-none mb-3">
+                    {pedal.name}
+                  </h2>
 
-                {/* BUTTONS */}
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() =>
-                      setStatus(
-                        pedal.pedal_id,
+                  {/* SPECS */}
+                  <div className="mb-4 space-y-1">
+                    <p className="text-xs text-[#5e564c]">
+                      {pedal.type_name}
+                    </p>
+
+                    <p className="text-xs text-[#8d857a]">
+                      {pedal.subtype_name}
+                    </p>
+                  </div>
+
+                  {/* ACTIONS */}
+                  <div
+                    className="flex flex-wrap gap-2"
+                    onClick={(e) =>
+                      e.preventDefault()
+                    }
+                  >
+                    <button
+                      onClick={() =>
+                        setStatus(
+                          pedal.pedal_id,
+                          'have'
+                        )
+                      }
+                      className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
+                        pedal.status ===
                         'have'
-                      )
-                    }
-                    className={`cursor-pointer text-xs px-3 py-2 rounded-full transition ${
-                      status === 'have'
-                        ? 'bg-black text-white'
-                        : 'bg-white border border-[#d6cec2]'
-                    }`}
-                  >
-                    Have
-                  </button>
+                          ? 'bg-black text-white'
+                          : 'bg-white border border-[#d6cec2]'
+                      }`}
+                    >
+                      Have
+                    </button>
 
-                  <button
-                    onClick={() =>
-                      setStatus(
-                        pedal.pedal_id,
+                    <button
+                      onClick={() =>
+                        setStatus(
+                          pedal.pedal_id,
+                          'had'
+                        )
+                      }
+                      className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
+                        pedal.status ===
                         'had'
-                      )
-                    }
-                    className={`cursor-pointer text-xs px-3 py-2 rounded-full transition ${
-                      status === 'had'
-                        ? 'bg-black text-white'
-                        : 'bg-white border border-[#d6cec2]'
-                    }`}
-                  >
-                    Had
-                  </button>
+                          ? 'bg-black text-white'
+                          : 'bg-white border border-[#d6cec2]'
+                      }`}
+                    >
+                      Had
+                    </button>
 
-                  <button
-                    onClick={() =>
-                      setStatus(
-                        pedal.pedal_id,
+                    <button
+                      onClick={() =>
+                        setStatus(
+                          pedal.pedal_id,
+                          'want'
+                        )
+                      }
+                      className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
+                        pedal.status ===
                         'want'
-                      )
-                    }
-                    className={`cursor-pointer text-xs px-3 py-2 rounded-full transition ${
-                      status === 'want'
-                        ? 'bg-black text-white'
-                        : 'bg-white border border-[#d6cec2]'
-                    }`}
-                  >
-                    Want
-                  </button>
+                          ? 'bg-black text-white'
+                          : 'bg-white border border-[#d6cec2]'
+                      }`}
+                    >
+                      Want
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </Link>
             )
           })}
         </div>
@@ -567,16 +501,14 @@ export default function DiscoverPage() {
           <div className="max-w-md mx-auto flex justify-around py-4 text-sm">
             <Link
               href="/discover"
-              className="text-black font-medium"
-              cursor-pointer
+              className="cursor-pointer text-black font-medium"
             >
               Discover
             </Link>
 
             <Link
               href="/collection"
-              className="text-[#8c8479]"
-              cursor-pointer
+              className="cursor-pointer text-[#8c8479]"
             >
               Collection
             </Link>
