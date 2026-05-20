@@ -370,7 +370,7 @@ export default function DiscoverPage() {
               setTypeFilter('all')
               setSubtypeFilter('all')
             }}
-            className="bg-white border border-[#d6cec2] rounded-2xl px-4 py-4 text-[#171717]"
+            className="cursor-pointer bg-white border border-[#d6cec2] rounded-2xl px-4 py-4 text-[#171717]"
           >
             <option value="all">
               All Brands
@@ -514,7 +514,7 @@ export default function DiscoverPage() {
                         'have'
                       )
                     }
-                    className={`text-xs px-3 py-2 rounded-full transition ${
+                    className={`cursor-pointer text-xs px-3 py-2 rounded-full transition ${
                       status === 'have'
                         ? 'bg-black text-white'
                         : 'bg-white border border-[#d6cec2]'
@@ -530,7 +530,7 @@ export default function DiscoverPage() {
                         'had'
                       )
                     }
-                    className={`text-xs px-3 py-2 rounded-full transition ${
+                    className={`cursor-pointer text-xs px-3 py-2 rounded-full transition ${
                       status === 'had'
                         ? 'bg-black text-white'
                         : 'bg-white border border-[#d6cec2]'
@@ -546,7 +546,7 @@ export default function DiscoverPage() {
                         'want'
                       )
                     }
-                    className={`text-xs px-3 py-2 rounded-full transition ${
+                    className={`cursor-pointer text-xs px-3 py-2 rounded-full transition ${
                       status === 'want'
                         ? 'bg-black text-white'
                         : 'bg-white border border-[#d6cec2]'
@@ -566,6 +566,7 @@ export default function DiscoverPage() {
             <Link
               href="/discover"
               className="text-black font-medium"
+              cursor-pointer
             >
               Discover
             </Link>
@@ -573,6 +574,7 @@ export default function DiscoverPage() {
             <Link
               href="/collection"
               className="text-[#8c8479]"
+              cursor-pointer
             >
               Collection
             </Link>
