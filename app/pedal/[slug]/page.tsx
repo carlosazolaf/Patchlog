@@ -1,130 +1,89 @@
-'use client'
-
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-export default function PedalDetailPage({
+export default async function PedalDetailPage({
   params
 }: {
   params: {
     slug: string
   }
 }) {
-  const [pedal, setPedal] =
-    useState<any>(null)
+  /*
+    PEDAL
+  */
 
-  const [stats, setStats] = useState({
-    have: 0,
-    had: 0,
-    want: 0
-  })
-
-  useEffect(() => {
-    fetchPedal()
-  }, [])
-
-  async function fetchPedal() {
-    /*
-      PEDAL
-    */
-
-    const { data: pedalData } =
-      await supabase
-        .from('pedals')
-        .select('*')
-        .eq('slug', params.slug)
-        .single()
-
-    if (!pedalData) return
-
-    /*
-      BRAND
-    */
-
-    const { data: brandData } =
-      await supabase
-        .from('brand')
-        .select('*')
-        .eq('brand_id', pedalData.brand_id)
-        .single()
-
-    /*
-      TYPE
-    */
-
-    const { data: typeData } =
-      await supabase
-        .from('type')
-        .select('*')
-        .eq('type_id', pedalData.type_id)
-        .single()
-
-    /*
-      SUBTYPE
-    */
-
-    const { data: subtypeData } =
-      await supabase
-        .from('subtype')
-        .select('*')
-        .eq(
-          'subtype_id',
-          pedalData.subtype_id
-        )
-        .single()
-
-    /*
-      COMMUNITY STATS
-    */
-
-    const { data: userPedals } =
-      await supabase
-        .from('user_pedals')
-        .select('*')
-        .eq('pedal_id', pedalData.pedal_id)
-
-    setStats({
-      have:
-        userPedals?.filter(
-          (p) => p.status === 'have'
-        ).length || 0,
-
-      had:
-        userPedals?.filter(
-          (p) => p.status === 'had'
-        ).length || 0,
-
-      want:
-        userPedals?.filter(
-          (p) => p.status === 'want'
-        ).length || 0
-    })
-
-    /*
-      ENRICH
-    */
-
-    setPedal({
-      ...pedalData,
-
-      brand_name:
-        brandData?.brand || '',
-
-      type_name:
-        typeData?.type || '',
-
-      subtype_name:
-        subtypeData?.subtype || ''
-    })
-  }
+  const { data: pedal } = await supabase
+    .from('pedals')
+    .select('*')
+    .eq('slug', params.slug)
+    .single()
 
   if (!pedal) {
     return (
       <main className="min-h-screen bg-[#f5f1ea] flex items-center justify-center">
-        Loading...
+        Pedal not found
       </main>
     )
+  }
+
+  /*
+    BRAND
+  */
+
+  const { data: brand } = await supabase
+    .from('brand')
+    .select('*')
+    .eq('brand_id', pedal.brand_id)
+    .single()
+
+  /*
+    TYPE
+  */
+
+  const { data: type } = await supabase
+    .from('type')
+    .select('*')
+    .eq('type_id', pedal.type_id)
+    .single()
+
+  /*
+    SUBTYPE
+  */
+
+  const { data: subtype } = await supabase
+    .from('subtype')
+    .select('*')
+    .eq(
+      'subtype_id',
+      pedal.subtype_id
+    )
+    .single()
+
+  /*
+    COMMUNITY
+  */
+
+  const { data: userPedals } =
+    await supabase
+      .from('user_pedals')
+      .select('*')
+      .eq('pedal_id', pedal.pedal_id)
+
+  const stats = {
+    have:
+      userPedals?.filter(
+        (p) => p.status === 'have'
+      ).length || 0,
+
+    had:
+      userPedals?.filter(
+        (p) => p.status === 'had'
+      ).length || 0,
+
+    want:
+      userPedals?.filter(
+        (p) => p.status === 'want'
+      ).length || 0
   }
 
   const imageUrl = `https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/pedal_images/${pedal.image_path}`
@@ -136,7 +95,7 @@ export default function PedalDetailPage({
         <div className="mb-8">
           <Link
             href="/discover"
-            className="text-sm text-[#6f675d]"
+            className="cursor-pointer text-sm text-[#6f675d]"
           >
             ← Back
           </Link>
@@ -153,7 +112,7 @@ export default function PedalDetailPage({
 
         {/* BRAND */}
         <p className="text-xs tracking-[0.35em] uppercase text-[#8d857a] mb-3">
-          {pedal.brand_name}
+          {brand?.brand}
         </p>
 
         {/* NAME */}
@@ -201,9 +160,7 @@ export default function PedalDetailPage({
               Type
             </p>
 
-            <p className="text-[#171717]">
-              {pedal.type_name}
-            </p>
+            <p>{type?.type || 'Unknown'}</p>
           </div>
 
           <div>
@@ -211,8 +168,9 @@ export default function PedalDetailPage({
               Subtype
             </p>
 
-            <p className="text-[#171717]">
-              {pedal.subtype_name}
+            <p>
+              {subtype?.subtype ||
+                'Unknown'}
             </p>
           </div>
 
@@ -221,8 +179,8 @@ export default function PedalDetailPage({
               Width
             </p>
 
-            <p className="text-[#171717]">
-              {pedal.w_mm} mm
+            <p>
+              {pedal.w_mm || 'Unknown'} mm
             </p>
           </div>
 
@@ -231,8 +189,8 @@ export default function PedalDetailPage({
               Height
             </p>
 
-            <p className="text-[#171717]">
-              {pedal.h_mm} mm
+            <p>
+              {pedal.h_mm || 'Unknown'} mm
             </p>
           </div>
 
@@ -241,7 +199,7 @@ export default function PedalDetailPage({
               Stereo
             </p>
 
-            <p className="text-[#171717]">
+            <p>
               {pedal.stereo || 'Unknown'}
             </p>
           </div>
@@ -251,7 +209,7 @@ export default function PedalDetailPage({
               Analog / Digital
             </p>
 
-            <p className="text-[#171717]">
+            <p>
               {pedal.analog_digital ||
                 'Unknown'}
             </p>
@@ -262,7 +220,7 @@ export default function PedalDetailPage({
               Release Year
             </p>
 
-            <p className="text-[#171717]">
+            <p>
               {pedal.release_year ||
                 'Unknown'}
             </p>
