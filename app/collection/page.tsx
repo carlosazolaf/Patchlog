@@ -65,10 +65,6 @@ export default function CollectionPage() {
   */
 
   async function fetchCollection() {
-    /*
-      USER PEDALS
-    */
-
     let userQuery = supabase
       .from('user_pedals')
       .select('*')
@@ -105,7 +101,7 @@ export default function CollectionPage() {
     })
 
     /*
-      FILTER STATUS
+      STATUS FILTER
     */
 
     if (statusFilter !== 'all') {
@@ -117,10 +113,6 @@ export default function CollectionPage() {
 
     const { data: userPedalsData } =
       await userQuery
-
-    /*
-      EMPTY
-    */
 
     if (
       !userPedalsData ||
@@ -253,14 +245,10 @@ export default function CollectionPage() {
       }
     )
 
-    /*
-      SET PEDALS
-    */
-
     setPedals(enriched)
 
     /*
-      ONLY COLLECTION BRANDS
+      FILTERED BRANDS
     */
 
     const collectionBrands = [
@@ -280,7 +268,7 @@ export default function CollectionPage() {
     )
 
     /*
-      ONLY COLLECTION TYPES
+      FILTERED TYPES
     */
 
     const collectionTypes = [
@@ -300,7 +288,7 @@ export default function CollectionPage() {
     )
 
     /*
-      ONLY COLLECTION SUBTYPES
+      FILTERED SUBTYPES
     */
 
     const collectionSubtypes = [
@@ -340,7 +328,7 @@ export default function CollectionPage() {
   }
 
   /*
-    CHANGE STATUS
+    MOVE STATUS
   */
 
   async function moveStatus(
@@ -398,7 +386,7 @@ export default function CollectionPage() {
               onClick={() =>
                 setStatusFilter(status)
               }
-              className={`px-4 py-3 rounded-full text-sm capitalize transition ${
+              className={`cursor-pointer px-4 py-3 rounded-full text-sm capitalize transition ${
                 statusFilter === status
                   ? 'bg-black text-white'
                   : 'bg-white border border-[#d6cec2]'
@@ -449,7 +437,7 @@ export default function CollectionPage() {
             onChange={(e) =>
               setModelFilter(e.target.value)
             }
-            className="bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
+            className="cursor-pointer bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
           >
             <option value="all">
               All Models
@@ -475,7 +463,7 @@ export default function CollectionPage() {
               setTypeFilter(e.target.value)
               setSubtypeFilter('all')
             }}
-            className="bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
+            className="cursor-pointer bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
           >
             <option value="all">
               All Types
@@ -497,7 +485,7 @@ export default function CollectionPage() {
             onChange={(e) =>
               setSubtypeFilter(e.target.value)
             }
-            className="bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
+            className="cursor-pointer bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
           >
             <option value="all">
               All Subtypes
@@ -521,103 +509,111 @@ export default function CollectionPage() {
 
             return (
               <Link
-  href={`/pedal/${pedal.slug}`}
-  key={pedal.pedal_id}
->
-                className="bg-[#fcfbf8] rounded-[2rem] p-4 border border-[#ebe6df]"
+                href={`/pedal/${pedal.slug}`}
+                key={pedal.pedal_id}
               >
-                {/* IMAGE */}
-                <div className="bg-[#f3efe8] rounded-[1.5rem] h-44 flex items-center justify-center mb-4">
-                  <img
-                    src={imageUrl}
-                    alt={pedal.name}
-                    className="h-32 object-contain"
-                  />
-                </Link>
+                <div className="bg-[#fcfbf8] rounded-[2rem] p-4 border border-[#ebe6df]">
+                  {/* IMAGE */}
+                  <div className="bg-[#f3efe8] rounded-[1.5rem] h-44 flex items-center justify-center mb-4">
+                    <img
+                      src={imageUrl}
+                      alt={pedal.name}
+                      className="h-32 object-contain"
+                    />
+                  </div>
 
-                {/* BRAND */}
-                <p className="text-[10px] uppercase tracking-[0.25em] text-[#8d857a] mb-2">
-                  {pedal.brand_name}
-                </p>
-
-                {/* NAME */}
-                <h2 className="text-2xl font-serif text-[#171717] leading-none mb-3">
-                  {pedal.name}
-                </h2>
-
-                {/* SPECS */}
-                <div className="mb-4 space-y-1">
-                  <p className="text-xs text-[#5e564c]">
-                    {pedal.type_name}
+                  {/* BRAND */}
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-[#8d857a] mb-2">
+                    {pedal.brand_name}
                   </p>
 
-                  <p className="text-xs text-[#8d857a]">
-                    {pedal.subtype_name}
-                  </p>
-                </div>
+                  {/* NAME */}
+                  <h2 className="text-2xl font-serif text-[#171717] leading-none mb-3">
+                    {pedal.name}
+                  </h2>
 
-                {/* ACTIONS */}
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() =>
-                      moveStatus(
-                        pedal.pedal_id,
+                  {/* SPECS */}
+                  <div className="mb-4 space-y-1">
+                    <p className="text-xs text-[#5e564c]">
+                      {pedal.type_name}
+                    </p>
+
+                    <p className="text-xs text-[#8d857a]">
+                      {pedal.subtype_name}
+                    </p>
+                  </div>
+
+                  {/* ACTIONS */}
+                  <div
+                    className="flex flex-wrap gap-2"
+                    onClick={(e) =>
+                      e.preventDefault()
+                    }
+                  >
+                    <button
+                      onClick={() =>
+                        moveStatus(
+                          pedal.pedal_id,
+                          'have'
+                        )
+                      }
+                      className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
+                        pedal.status ===
                         'have'
-                      )
-                    }
-                    className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
-                      pedal.status === 'have'
-                        ? 'bg-black text-white'
-                        : 'bg-white border border-[#d6cec2]'
-                    }`}
-                  >
-                    Have
-                  </button>
+                          ? 'bg-black text-white'
+                          : 'bg-white border border-[#d6cec2]'
+                      }`}
+                    >
+                      Have
+                    </button>
 
-                  <button
-                    onClick={() =>
-                      moveStatus(
-                        pedal.pedal_id,
+                    <button
+                      onClick={() =>
+                        moveStatus(
+                          pedal.pedal_id,
+                          'had'
+                        )
+                      }
+                      className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
+                        pedal.status ===
                         'had'
-                      )
-                    }
-                    className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
-                      pedal.status === 'had'
-                        ? 'bg-black text-white'
-                        : 'bg-white border border-[#d6cec2]'
-                    }`}
-                  >
-                    Had
-                  </button>
+                          ? 'bg-black text-white'
+                          : 'bg-white border border-[#d6cec2]'
+                      }`}
+                    >
+                      Had
+                    </button>
 
-                  <button
-                    onClick={() =>
-                      moveStatus(
-                        pedal.pedal_id,
+                    <button
+                      onClick={() =>
+                        moveStatus(
+                          pedal.pedal_id,
+                          'want'
+                        )
+                      }
+                      className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
+                        pedal.status ===
                         'want'
-                      )
-                    }
-                    className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
-                      pedal.status === 'want'
-                        ? 'bg-black text-white'
-                        : 'bg-white border border-[#d6cec2]'
-                    }`}
-                  >
-                    Want
-                  </button>
+                          ? 'bg-black text-white'
+                          : 'bg-white border border-[#d6cec2]'
+                      }`}
+                    >
+                      Want
+                    </button>
 
-                  <button
-                    onClick={() =>
-                      removePedal(
-                        pedal.pedal_id
-                      )
-                    }
-                    className="cursor-pointer text-xs px-3 py-2 rounded-full bg-red-100 text-red-700"
-                  >
-                    Remove
-                  </button>
+                    <button
+                      onClick={() =>
+                        removePedal(
+                          pedal.pedal_id
+                        )
+                      }
+                      className="cursor-pointer text-xs px-3 py-2 rounded-full bg-red-100 text-red-700"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
-              </div>
+              </Link>
             )
           })}
         </div>
@@ -627,16 +623,14 @@ export default function CollectionPage() {
           <div className="max-w-md mx-auto flex justify-around py-4 text-sm">
             <Link
               href="/discover"
-              className="text-[#8c8479]"
-              cursor-pointer
+              className="cursor-pointer text-[#8c8479]"
             >
               Discover
             </Link>
 
             <Link
               href="/collection"
-              className="text-black font-medium"
-              cursor-pointer
+              className="cursor-pointer text-black font-medium"
             >
               Collection
             </Link>
