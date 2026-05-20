@@ -265,241 +265,32 @@ export default function DiscoverPage() {
       <div className="w-full max-w-md px-5 py-8">
         {/* HEADER */}
         <div className="mb-10">
-          <div className="flex items-center gap-3 mb-4">
-  <img
-    src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
-    alt="Patchlog"
-    className="w-14 h-14 object-contain scale-150"
-  />
+          <div className="mb-6">
+            <p className="text-sm tracking-[0.45em] uppercase text-[#4f4942]">
+              PATCHLOG
+            </p>
 
-  <p className="text-sm tracking-[0.35em] uppercase text-[#4f4942]">
-    PATCHLOG
-  </p>
-</div>
+            <div className="flex items-center mt-2">
+              <div className="h-px bg-[#b8afa3] flex-1" />
 
-          <h1 className="text-5xl font-serif text-[#171717] leading-none mb-4">
+              <img
+                src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
+                alt="Patchlog"
+                className="h-4 mx-3 object-contain"
+              />
+
+              <div className="h-px bg-[#b8afa3] flex-1" />
+            </div>
+          </div>
+
+          <h1 className="text-5xl font-serif font-medium text-[#3d3935] leading-none mb-4">
             Discover
           </h1>
 
-          <p className="text-[#5e564c]">
+          <p className="text-[#4f4942]">
             Explore the world of pedals.
           </p>
         </div>
-
-        {/* FILTERS */}
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <select
-            value={brandFilter}
-            onChange={(e) => {
-              setBrandFilter(e.target.value)
-
-              setModelFilter('all')
-              setTypeFilter('all')
-              setSubtypeFilter('all')
-            }}
-            className="cursor-pointer bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
-          >
-            <option value="all">
-              All Brands
-            </option>
-
-            {brands.map((brand) => (
-              <option
-                key={brand.brand_id}
-                value={brand.brand_id}
-              >
-                {brand.brand}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={modelFilter}
-            onChange={(e) =>
-              setModelFilter(e.target.value)
-            }
-            className="cursor-pointer bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
-          >
-            <option value="all">
-              All Models
-            </option>
-
-            {models.map((pedal) => (
-              <option
-                key={pedal.pedal_id}
-                value={pedal.pedal_id}
-              >
-                {pedal.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 mb-8">
-          <select
-            value={typeFilter}
-            onChange={(e) => {
-              setTypeFilter(e.target.value)
-              setSubtypeFilter('all')
-            }}
-            className="cursor-pointer bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
-          >
-            <option value="all">
-              All Types
-            </option>
-
-            {types.map((type) => (
-              <option
-                key={type.type_id}
-                value={type.type_id}
-              >
-                {type.type}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={subtypeFilter}
-            onChange={(e) =>
-              setSubtypeFilter(e.target.value)
-            }
-            className="cursor-pointer bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
-          >
-            <option value="all">
-              All Subtypes
-            </option>
-
-            {subtypes.map((subtype) => (
-              <option
-                key={subtype.subtype_id}
-                value={subtype.subtype_id}
-              >
-                {subtype.subtype}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* GRID */}
-        <div className="grid grid-cols-2 gap-4">
-          {pedals.map((pedal) => {
-            const imageUrl = `https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/pedal_images/${pedal.image_path}`
-
-            return (
-              <Link
-                href={`/pedal/${pedal.pedal_id}`}
-                key={pedal.pedal_id}
-              >
-                <div className="bg-[#fcfbf8] rounded-[2rem] p-4 border border-[#ebe6df]">
-                  <div className="bg-[#f3efe8] rounded-[1.5rem] h-44 flex items-center justify-center mb-4">
-                    <img
-                      src={imageUrl}
-                      alt={pedal.name}
-                      className="h-32 object-contain"
-                    />
-                  </div>
-
-                  <p className="text-[10px] uppercase tracking-[0.25em] text-[#8d857a] mb-2">
-                    {pedal.brand_name}
-                  </p>
-
-                  <h2 className="text-2xl font-serif text-[#171717] leading-none mb-3">
-                    {pedal.name}
-                  </h2>
-
-                  <div className="mb-4 space-y-1">
-                    <p className="text-xs text-[#5e564c]">
-                      {pedal.type_name}
-                    </p>
-
-                    <p className="text-xs text-[#8d857a]">
-                      {pedal.subtype_name}
-                    </p>
-                  </div>
-
-                  <div
-                    className="flex flex-wrap gap-2"
-                    onClick={(e) =>
-                      e.preventDefault()
-                    }
-                  >
-                    <button
-                      onClick={() =>
-                        setStatus(
-                          pedal.pedal_id,
-                          'have'
-                        )
-                      }
-                      className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
-                        pedal.status ===
-                        'have'
-                          ? 'bg-black text-white'
-                          : 'bg-white border border-[#d6cec2]'
-                      }`}
-                    >
-                      Have
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        setStatus(
-                          pedal.pedal_id,
-                          'had'
-                        )
-                      }
-                      className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
-                        pedal.status ===
-                        'had'
-                          ? 'bg-black text-white'
-                          : 'bg-white border border-[#d6cec2]'
-                      }`}
-                    >
-                      Had
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        setStatus(
-                          pedal.pedal_id,
-                          'want'
-                        )
-                      }
-                      className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
-                        pedal.status ===
-                        'want'
-                          ? 'bg-black text-white'
-                          : 'bg-white border border-[#d6cec2]'
-                      }`}
-                    >
-                      Want
-                    </button>
-                  </div>
-                </div>
-              </Link>
-            )
-          })}
-        </div>
-
-        {/* NAV */}
-        <div className="fixed bottom-0 left-0 right-0 bg-[#f5f1ea]/95 backdrop-blur border-t border-[#e8e1d8]">
-          <div className="max-w-md mx-auto flex justify-around py-4 text-sm">
-            <Link
-              href="/discover"
-              className="cursor-pointer text-black font-medium"
-            >
-              Discover
-            </Link>
-
-            <Link
-              href="/collection"
-              className="cursor-pointer text-[#8c8479]"
-            >
-              Collection
-            </Link>
-          </div>
-        </div>
-
-        <div className="h-24" />
       </div>
     </main>
   )
