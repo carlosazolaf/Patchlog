@@ -193,25 +193,16 @@ export default function CollectionPage() {
       await supabase
         .from('brand')
         .select('*')
-        .order('brand', {
-          ascending: true
-        })
 
     const { data: typesData } =
       await supabase
         .from('type')
         .select('*')
-        .order('type', {
-          ascending: true
-        })
 
     const { data: subtypesData } =
       await supabase
         .from('subtype')
         .select('*')
-        .order('subtype', {
-          ascending: true
-        })
 
     /*
       ENRICH
@@ -262,11 +253,75 @@ export default function CollectionPage() {
       }
     )
 
+    /*
+      SET PEDALS
+    */
+
     setPedals(enriched)
 
-    setBrands(brandsData || [])
-    setTypes(typesData || [])
-    setSubtypes(subtypesData || [])
+    /*
+      ONLY COLLECTION BRANDS
+    */
+
+    const collectionBrands = [
+      ...new Map(
+        enriched.map((p) => [
+          p.brand_id,
+          {
+            brand_id: p.brand_id,
+            brand: p.brand_name
+          }
+        ])
+      ).values()
+    ].sort((a, b) =>
+      (a.brand || '').localeCompare(
+        b.brand || ''
+      )
+    )
+
+    /*
+      ONLY COLLECTION TYPES
+    */
+
+    const collectionTypes = [
+      ...new Map(
+        enriched.map((p) => [
+          p.type_id,
+          {
+            type_id: p.type_id,
+            type: p.type_name
+          }
+        ])
+      ).values()
+    ].sort((a, b) =>
+      (a.type || '').localeCompare(
+        b.type || ''
+      )
+    )
+
+    /*
+      ONLY COLLECTION SUBTYPES
+    */
+
+    const collectionSubtypes = [
+      ...new Map(
+        enriched.map((p) => [
+          p.subtype_id,
+          {
+            subtype_id: p.subtype_id,
+            subtype: p.subtype_name
+          }
+        ])
+      ).values()
+    ].sort((a, b) =>
+      (a.subtype || '').localeCompare(
+        b.subtype || ''
+      )
+    )
+
+    setBrands(collectionBrands)
+    setTypes(collectionTypes)
+    setSubtypes(collectionSubtypes)
   }
 
   /*
@@ -308,54 +363,6 @@ export default function CollectionPage() {
     return [...pedals].sort((a, b) =>
       (a.name || '').localeCompare(
         b.name || ''
-      )
-    )
-  }, [pedals])
-
-  /*
-    TYPES
-  */
-
-  const filteredTypes = useMemo(() => {
-    const unique = [
-      ...new Map(
-        pedals.map((p) => [
-          p.type_id,
-          {
-            type_id: p.type_id,
-            type: p.type_name
-          }
-        ])
-      ).values()
-    ]
-
-    return unique.sort((a, b) =>
-      (a.type || '').localeCompare(
-        b.type || ''
-      )
-    )
-  }, [pedals])
-
-  /*
-    SUBTYPES
-  */
-
-  const filteredSubtypes = useMemo(() => {
-    const unique = [
-      ...new Map(
-        pedals.map((p) => [
-          p.subtype_id,
-          {
-            subtype_id: p.subtype_id,
-            subtype: p.subtype_name
-          }
-        ])
-      ).values()
-    ]
-
-    return unique.sort((a, b) =>
-      (a.subtype || '').localeCompare(
-        b.subtype || ''
       )
     )
   }, [pedals])
@@ -474,7 +481,7 @@ export default function CollectionPage() {
               All Types
             </option>
 
-            {filteredTypes.map((type) => (
+            {types.map((type) => (
               <option
                 key={type.type_id}
                 value={type.type_id}
@@ -496,18 +503,14 @@ export default function CollectionPage() {
               All Subtypes
             </option>
 
-            {filteredSubtypes.map(
-              (subtype) => (
-                <option
-                  key={subtype.subtype_id}
-                  value={
-                    subtype.subtype_id
-                  }
-                >
-                  {subtype.subtype}
-                </option>
-              )
-            )}
+            {subtypes.map((subtype) => (
+              <option
+                key={subtype.subtype_id}
+                value={subtype.subtype_id}
+              >
+                {subtype.subtype}
+              </option>
+            ))}
           </select>
         </div>
 
