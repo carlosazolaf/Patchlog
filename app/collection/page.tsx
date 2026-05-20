@@ -360,9 +360,17 @@ export default function CollectionPage() {
       <div className="w-full max-w-md px-5 py-8">
         {/* HEADER */}
         <div className="mb-10">
-          <p className="text-xs tracking-[0.35em] uppercase text-[#6f675d] mb-4">
-            PATCHLOG
-          </p>
+          <div className="flex items-center gap-3 mb-4">
+  <img
+    src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
+    alt="Patchlog"
+    className="w-8 h-8 object-contain"
+  />
+
+  <p className="text-sm tracking-[0.35em] uppercase text-[#4f4942]">
+    PATCHLOG
+  </p>
+</div>
 
           <h1 className="text-5xl font-serif text-[#171717] leading-none mb-4">
             Collection
