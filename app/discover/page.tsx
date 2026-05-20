@@ -471,8 +471,10 @@ export default function DiscoverPage() {
             )
 
             return (
-              <div
-                key={pedal.pedal_id}
+              <Link
+  href={`/pedal/${pedal.slug}`}
+  key={pedal.pedal_id}
+>
                 className="bg-[#fcfbf8] rounded-[2rem] p-4 border border-[#ebe6df]"
               >
                 {/* IMAGE */}
@@ -482,7 +484,7 @@ export default function DiscoverPage() {
                     alt={pedal.name}
                     className="h-32 object-contain"
                   />
-                </div>
+                </Link>
 
                 {/* BRAND */}
                 <p className="text-[10px] uppercase tracking-[0.25em] text-[#8d857a] mb-2">
