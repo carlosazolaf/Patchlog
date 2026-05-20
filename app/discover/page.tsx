@@ -398,7 +398,7 @@ export default function DiscoverPage() {
 
             return (
               <Link
-                href={`/pedal/${pedal.slug}`}
+                href={`/pedal/${pedal.pedal_id}`}
                 key={pedal.pedal_id}
               >
                 <div className="bg-[#fcfbf8] rounded-[2rem] p-4 border border-[#ebe6df]">
