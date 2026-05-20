@@ -13,17 +13,20 @@ export default function CollectionPage() {
     useState<any[]>([])
 
   /*
-    STATUS TAB
+    STATUS FILTER
   */
 
   const [statusFilter, setStatusFilter] =
-    useState('have')
+    useState('all')
 
   /*
     FILTERS
   */
 
   const [brandFilter, setBrandFilter] =
+    useState('all')
+
+  const [modelFilter, setModelFilter] =
     useState('all')
 
   const [typeFilter, setTypeFilter] =
@@ -33,7 +36,18 @@ export default function CollectionPage() {
     useState('all')
 
   /*
-    INITIAL LOAD
+    COUNTS
+  */
+
+  const [counts, setCounts] = useState({
+    all: 0,
+    have: 0,
+    had: 0,
+    want: 0
+  })
+
+  /*
+    LOAD
   */
 
   useEffect(() => {
@@ -41,12 +55,13 @@ export default function CollectionPage() {
   }, [
     statusFilter,
     brandFilter,
+    modelFilter,
     typeFilter,
     subtypeFilter
   ])
 
   /*
-    FETCH COLLECTION
+    FETCH
   */
 
   async function fetchCollection() {
@@ -54,11 +69,54 @@ export default function CollectionPage() {
       USER PEDALS
     */
 
-    const { data: userPedalsData } =
+    let userQuery = supabase
+      .from('user_pedals')
+      .select('*')
+
+    /*
+      COUNTS
+    */
+
+    const { data: allStatuses } =
       await supabase
         .from('user_pedals')
         .select('*')
-        .eq('status', statusFilter)
+
+    const haveCount =
+      allStatuses?.filter(
+        (p) => p.status === 'have'
+      ).length || 0
+
+    const hadCount =
+      allStatuses?.filter(
+        (p) => p.status === 'had'
+      ).length || 0
+
+    const wantCount =
+      allStatuses?.filter(
+        (p) => p.status === 'want'
+      ).length || 0
+
+    setCounts({
+      all: allStatuses?.length || 0,
+      have: haveCount,
+      had: hadCount,
+      want: wantCount
+    })
+
+    /*
+      FILTER STATUS
+    */
+
+    if (statusFilter !== 'all') {
+      userQuery = userQuery.eq(
+        'status',
+        statusFilter
+      )
+    }
+
+    const { data: userPedalsData } =
+      await userQuery
 
     /*
       EMPTY
@@ -93,7 +151,7 @@ export default function CollectionPage() {
       })
 
     /*
-      BRAND
+      FILTERS
     */
 
     if (brandFilter !== 'all') {
@@ -103,9 +161,12 @@ export default function CollectionPage() {
       )
     }
 
-    /*
-      TYPE
-    */
+    if (modelFilter !== 'all') {
+      pedalsQuery = pedalsQuery.eq(
+        'pedal_id',
+        modelFilter
+      )
+    }
 
     if (typeFilter !== 'all') {
       pedalsQuery = pedalsQuery.eq(
@@ -113,10 +174,6 @@ export default function CollectionPage() {
         typeFilter
       )
     }
-
-    /*
-      SUBTYPE
-    */
 
     if (subtypeFilter !== 'all') {
       pedalsQuery = pedalsQuery.eq(
@@ -129,7 +186,7 @@ export default function CollectionPage() {
       await pedalsQuery
 
     /*
-      BRANDS
+      LOOKUPS
     */
 
     const { data: brandsData } =
@@ -140,10 +197,6 @@ export default function CollectionPage() {
           ascending: true
         })
 
-    /*
-      TYPES
-    */
-
     const { data: typesData } =
       await supabase
         .from('type')
@@ -151,10 +204,6 @@ export default function CollectionPage() {
         .order('type', {
           ascending: true
         })
-
-    /*
-      SUBTYPES
-    */
 
     const { data: subtypesData } =
       await supabase
@@ -188,11 +237,12 @@ export default function CollectionPage() {
             Number(pedal.subtype_id)
         )
 
-        const status = userPedalsData.find(
-          (u) =>
-            Number(u.pedal_id) ===
-            Number(pedal.pedal_id)
-        )?.status
+        const userPedal =
+          userPedalsData.find(
+            (u) =>
+              Number(u.pedal_id) ===
+              Number(pedal.pedal_id)
+          )
 
         return {
           ...pedal,
@@ -206,7 +256,8 @@ export default function CollectionPage() {
           subtype_name:
             subtype?.subtype || '',
 
-          status
+          status:
+            userPedal?.status || ''
         }
       }
     )
@@ -234,7 +285,7 @@ export default function CollectionPage() {
   }
 
   /*
-    MOVE STATUS
+    CHANGE STATUS
   */
 
   async function moveStatus(
@@ -250,7 +301,19 @@ export default function CollectionPage() {
   }
 
   /*
-    FILTERED TYPES
+    MODELS
+  */
+
+  const models = useMemo(() => {
+    return [...pedals].sort((a, b) =>
+      (a.name || '').localeCompare(
+        b.name || ''
+      )
+    )
+  }, [pedals])
+
+  /*
+    TYPES
   */
 
   const filteredTypes = useMemo(() => {
@@ -274,7 +337,7 @@ export default function CollectionPage() {
   }, [pedals])
 
   /*
-    FILTERED SUBTYPES
+    SUBTYPES
   */
 
   const filteredSubtypes = useMemo(() => {
@@ -315,35 +378,48 @@ export default function CollectionPage() {
           </p>
         </div>
 
-        {/* STATUS TABS */}
-        <div className="flex gap-2 mb-6">
-          {['have', 'had', 'want'].map(
-            (status) => (
-              <button
-                key={status}
-                onClick={() =>
-                  setStatusFilter(status)
-                }
-                className={`px-4 py-3 rounded-full text-sm capitalize transition ${
-                  statusFilter === status
-                    ? 'bg-black text-white'
-                    : 'bg-white border border-[#d6cec2]'
-                }`}
-              >
-                {status}
-              </button>
-            )
-          )}
+        {/* STATUS */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          {[
+            'all',
+            'have',
+            'had',
+            'want'
+          ].map((status) => (
+            <button
+              key={status}
+              onClick={() =>
+                setStatusFilter(status)
+              }
+              className={`px-4 py-3 rounded-full text-sm capitalize transition ${
+                statusFilter === status
+                  ? 'bg-black text-white'
+                  : 'bg-white border border-[#d6cec2]'
+              }`}
+            >
+              {status} (
+              {
+                counts[
+                  status as keyof typeof counts
+                ]
+              }
+              )
+            </button>
+          ))}
         </div>
 
-        {/* FILTERS */}
-        <div className="grid grid-cols-2 gap-3 mb-8">
+        {/* FILTERS ROW 1 */}
+        <div className="grid grid-cols-2 gap-3 mb-3">
           {/* BRAND */}
           <select
             value={brandFilter}
-            onChange={(e) =>
+            onChange={(e) => {
               setBrandFilter(e.target.value)
-            }
+
+              setModelFilter('all')
+              setTypeFilter('all')
+              setSubtypeFilter('all')
+            }}
             className="bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
           >
             <option value="all">
@@ -360,6 +436,31 @@ export default function CollectionPage() {
             ))}
           </select>
 
+          {/* MODEL */}
+          <select
+            value={modelFilter}
+            onChange={(e) =>
+              setModelFilter(e.target.value)
+            }
+            className="bg-white border border-[#d6cec2] rounded-2xl px-4 py-4"
+          >
+            <option value="all">
+              All Models
+            </option>
+
+            {models.map((pedal) => (
+              <option
+                key={pedal.pedal_id}
+                value={pedal.pedal_id}
+              >
+                {pedal.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* FILTERS ROW 2 */}
+        <div className="grid grid-cols-2 gap-3 mb-8">
           {/* TYPE */}
           <select
             value={typeFilter}
