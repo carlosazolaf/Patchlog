@@ -48,10 +48,6 @@ export default function DiscoverPage() {
   */
 
   async function fetchData() {
-    /*
-      PEDALS
-    */
-
     let pedalsQuery = supabase
       .from('pedals')
       .select('*')
@@ -235,22 +231,12 @@ export default function DiscoverPage() {
         Number(pedalId)
     )
 
-    /*
-      UPDATE
-    */
-
     if (existing) {
       await supabase
         .from('user_pedals')
         .update({ status })
         .eq('pedal_id', pedalId)
-    }
-
-    /*
-      INSERT
-    */
-
-    else {
+    } else {
       await supabase
         .from('user_pedals')
         .insert({
@@ -292,7 +278,7 @@ export default function DiscoverPage() {
           </p>
         </div>
 
-        {/* FILTERS ROW 1 */}
+        {/* FILTERS */}
         <div className="grid grid-cols-2 gap-3 mb-3">
           <select
             value={brandFilter}
@@ -341,7 +327,6 @@ export default function DiscoverPage() {
           </select>
         </div>
 
-        {/* FILTERS ROW 2 */}
         <div className="grid grid-cols-2 gap-3 mb-8">
           <select
             value={typeFilter}
@@ -486,6 +471,27 @@ export default function DiscoverPage() {
             )
           })}
         </div>
+
+        {/* NAV */}
+        <div className="fixed bottom-0 left-0 right-0 bg-[#f5f1ea]/95 backdrop-blur border-t border-[#e8e1d8]">
+          <div className="max-w-md mx-auto flex justify-around py-4 text-sm">
+            <Link
+              href="/discover"
+              className="cursor-pointer text-black font-medium"
+            >
+              Discover
+            </Link>
+
+            <Link
+              href="/collection"
+              className="cursor-pointer text-[#8c8479]"
+            >
+              Collection
+            </Link>
+          </div>
+        </div>
+
+        <div className="h-24" />
       </div>
     </main>
   )
