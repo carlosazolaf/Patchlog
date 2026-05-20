@@ -294,7 +294,6 @@ export default function DiscoverPage() {
 
         {/* FILTERS ROW 1 */}
         <div className="grid grid-cols-2 gap-3 mb-3">
-          {/* BRAND */}
           <select
             value={brandFilter}
             onChange={(e) => {
@@ -320,7 +319,6 @@ export default function DiscoverPage() {
             ))}
           </select>
 
-          {/* MODEL */}
           <select
             value={modelFilter}
             onChange={(e) =>
@@ -345,7 +343,6 @@ export default function DiscoverPage() {
 
         {/* FILTERS ROW 2 */}
         <div className="grid grid-cols-2 gap-3 mb-8">
-          {/* TYPE */}
           <select
             value={typeFilter}
             onChange={(e) => {
@@ -368,7 +365,6 @@ export default function DiscoverPage() {
             ))}
           </select>
 
-          {/* SUBTYPE */}
           <select
             value={subtypeFilter}
             onChange={(e) =>
@@ -402,7 +398,6 @@ export default function DiscoverPage() {
                 key={pedal.pedal_id}
               >
                 <div className="bg-[#fcfbf8] rounded-[2rem] p-4 border border-[#ebe6df]">
-                  {/* IMAGE */}
                   <div className="bg-[#f3efe8] rounded-[1.5rem] h-44 flex items-center justify-center mb-4">
                     <img
                       src={imageUrl}
@@ -411,17 +406,14 @@ export default function DiscoverPage() {
                     />
                   </div>
 
-                  {/* BRAND */}
                   <p className="text-[10px] uppercase tracking-[0.25em] text-[#8d857a] mb-2">
                     {pedal.brand_name}
                   </p>
 
-                  {/* NAME */}
                   <h2 className="text-2xl font-serif text-[#171717] leading-none mb-3">
                     {pedal.name}
                   </h2>
 
-                  {/* SPECS */}
                   <div className="mb-4 space-y-1">
                     <p className="text-xs text-[#5e564c]">
                       {pedal.type_name}
@@ -432,7 +424,6 @@ export default function DiscoverPage() {
                     </p>
                   </div>
 
-                  {/* ACTIONS */}
                   <div
                     className="flex flex-wrap gap-2"
                     onClick={(e) =>
@@ -495,27 +486,6 @@ export default function DiscoverPage() {
             )
           })}
         </div>
-
-        {/* NAV */}
-        <div className="fixed bottom-0 left-0 right-0 bg-[#f5f1ea]/95 backdrop-blur border-t border-[#e8e1d8]">
-          <div className="max-w-md mx-auto flex justify-around py-4 text-sm">
-            <Link
-              href="/discover"
-              className="cursor-pointer text-black font-medium"
-            >
-              Discover
-            </Link>
-
-            <Link
-              href="/collection"
-              className="cursor-pointer text-[#8c8479]"
-            >
-              Collection
-            </Link>
-          </div>
-        </div>
-
-        <div className="h-24" />
       </div>
     </main>
   )
