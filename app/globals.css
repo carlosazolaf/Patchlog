@@ -24,26 +24,3 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
-
-/* =========================
-   PATCHLOG FIXES
-========================= */
-
-html,
-body {
-  overflow-x: hidden;
-}
-
-/*
-  Better mobile contrast
-*/
-
-select,
-input {
-  color: #26211d;
-  border-color: #c8beb1;
-}
-
-button {
-  -webkit-tap-highlight-color: transparent;
-}
