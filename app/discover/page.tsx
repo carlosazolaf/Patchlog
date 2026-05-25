@@ -56,10 +56,6 @@ export default function DiscoverPage() {
       })
       .limit(300)
 
-    /*
-      FILTERS
-    */
-
     if (brandFilter !== 'all') {
       pedalsQuery = pedalsQuery.eq(
         'brand_id',
@@ -91,10 +87,6 @@ export default function DiscoverPage() {
     const { data: pedalsData } =
       await pedalsQuery
 
-    /*
-      LOOKUPS
-    */
-
     const { data: brandsData } =
       await supabase
         .from('brand')
@@ -119,18 +111,10 @@ export default function DiscoverPage() {
           ascending: true
         })
 
-    /*
-      USER PEDALS
-    */
-
     const { data: userPedalsData } =
       await supabase
         .from('user_pedals')
         .select('*')
-
-    /*
-      ENRICH
-    */
 
     const enriched = (pedalsData || []).map(
       (pedal) => {
@@ -161,16 +145,12 @@ export default function DiscoverPage() {
 
         return {
           ...pedal,
-
           brand_name:
             brand?.brand || '',
-
           type_name:
             type?.type || '',
-
           subtype_name:
             subtype?.subtype || '',
-
           status:
             userPedal?.status || ''
         }
@@ -179,10 +159,6 @@ export default function DiscoverPage() {
 
     setPedals(enriched)
     setUserPedals(userPedalsData || [])
-
-    /*
-      FILTERED TYPES
-    */
 
     const filteredTypes = [
       ...new Map(
@@ -195,10 +171,6 @@ export default function DiscoverPage() {
         ])
       ).values()
     ]
-
-    /*
-      FILTERED SUBTYPES
-    */
 
     const filteredSubtypes = [
       ...new Map(
@@ -264,21 +236,21 @@ export default function DiscoverPage() {
     <main className="min-h-screen bg-[#f5f1ea] flex justify-center">
       <div className="w-full max-w-md px-5 py-8">
         {/* HEADER */}
-<div className="mb-8">
-  <img
-    src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
-    alt="Patchlog"
-    className="w-full scale-125 object-contain mb-6"
-  />
+        <div className="mb-8">
+          <img
+            src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
+            alt="Patchlog"
+            className="w-full scale-125 object-contain mb-6"
+          />
 
-  <h1 className="text-4xl font-serif font-medium text-[#3d3935] leading-none mb-3">
-    Discover
-  </h1>
+          <h1 className="text-4xl font-serif font-medium text-[#3d3935] leading-none mb-3">
+            Discover
+          </h1>
 
-  <p className="text-[#4f4942]">
-    Explore the world of pedals.
-  </p>
-</div>
+          <p className="text-[#4f4942]">
+            Explore the world of pedals.
+          </p>
+        </div>
 
         {/* FILTERS */}
         <div className="grid grid-cols-2 gap-3 mb-3">
@@ -286,7 +258,6 @@ export default function DiscoverPage() {
             value={brandFilter}
             onChange={(e) => {
               setBrandFilter(e.target.value)
-
               setModelFilter('all')
               setTypeFilter('all')
               setSubtypeFilter('all')
