@@ -1,26 +1,153 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f1ea;
+
+  --foreground: #26211d;
+
+  --card: #faf7f2;
+
+  --card-soft: #f3efe8;
+
+  --border: #c8beb1;
+
+  --text-primary: #26211d;
+
+  --text-secondary: #5e564d;
+
+  --text-soft: #7a7064;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+html {
+  background: var(--background);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  overflow-x: hidden;
 }
 
 body {
   background: var(--background);
+
   color: var(--foreground);
+
   font-family: Arial, Helvetica, sans-serif;
+
+  overflow-x: hidden;
+
+  -webkit-font-smoothing: antialiased;
+
+  text-rendering: optimizeLegibility;
+}
+
+/*
+  LINKS
+*/
+
+a {
+  text-decoration: none;
+
+  color: inherit;
+}
+
+/*
+  BUTTONS
+*/
+
+button {
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:hover {
+  opacity: 0.92;
+}
+
+/*
+  INPUTS
+*/
+
+select,
+input {
+  outline: none;
+
+  appearance: none;
+
+  -webkit-appearance: none;
+
+  background: var(--card);
+
+  color: var(--text-primary);
+
+  border: 1px solid var(--border);
+
+  border-radius: 1rem;
+
+  font-size: 16px;
+}
+
+/*
+  PLACEHOLDER
+*/
+
+::placeholder {
+  color: var(--text-soft);
+}
+
+/*
+  SCROLLBAR
+*/
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d5ccbf;
+
+  border-radius: 999px;
+}
+
+/*
+  TYPOGRAPHY
+*/
+
+h1,
+h2,
+h3 {
+  color: var(--text-primary);
+
+  letter-spacing: -0.02em;
+}
+
+p {
+  color: var(--text-secondary);
+}
+
+/*
+  MOBILE
+*/
+
+@media (max-width: 640px) {
+  body {
+    font-size: 15px;
+  }
+
+  button {
+    font-size: 14px;
+
+    font-weight: 500;
+  }
+
+  select,
+  input {
+    font-size: 16px;
+  }
 }
