@@ -233,21 +233,21 @@ export default function DiscoverPage() {
   }, [pedals])
 
   return (
-    <main className="min-h-screen bg-[#f5f1ea] flex justify-center">
-      <div className="w-full max-w-md px-5 py-4">
+    <main className="min-h-screen bg-[#f5f1ea] flex justify-center overflow-x-hidden">
+      <div className="w-full max-w-md px-6 py-4">
         {/* HEADER */}
         <div className="mb-8">
           <img
             src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
             alt="Patchlog"
-            className="w-[92%] mx-auto object-contain mb-4"
+            className="w-full object-contain mb-5"
           />
 
-          <h1 className="text-3xl font-serif font-medium text-[#3d3935] leading-none mb-3">
+          <h1 className="text-3xl font-serif font-medium text-[#2f2a24] leading-none mb-2">
             Discover
           </h1>
 
-          <p className="text-[#4f4942]">
+          <p className="text-[#4a443d] text-base">
             Explore the world of pedals.
           </p>
         </div>
@@ -262,7 +262,7 @@ export default function DiscoverPage() {
               setTypeFilter('all')
               setSubtypeFilter('all')
             }}
-            className="cursor-pointer bg-[#faf7f2] border border-[#d6cec2] rounded-2xl px-4 py-4"
+            className="cursor-pointer bg-[#faf7f2] border border-[#d0c7bb] rounded-2xl px-4 py-4 text-[#2f2a24]"
           >
             <option value="all">
               All Brands
@@ -283,7 +283,7 @@ export default function DiscoverPage() {
             onChange={(e) =>
               setModelFilter(e.target.value)
             }
-            className="cursor-pointer bg-[#faf7f2] border border-[#d6cec2] rounded-2xl px-4 py-4"
+            className="cursor-pointer bg-[#faf7f2] border border-[#d0c7bb] rounded-2xl px-4 py-4 text-[#2f2a24]"
           >
             <option value="all">
               All Models
@@ -307,7 +307,7 @@ export default function DiscoverPage() {
               setTypeFilter(e.target.value)
               setSubtypeFilter('all')
             }}
-            className="cursor-pointer bg-[#faf7f2] border border-[#d6cec2] rounded-2xl px-4 py-4"
+            className="cursor-pointer bg-[#faf7f2] border border-[#d0c7bb] rounded-2xl px-4 py-4 text-[#2f2a24]"
           >
             <option value="all">
               All Types
@@ -328,7 +328,7 @@ export default function DiscoverPage() {
             onChange={(e) =>
               setSubtypeFilter(e.target.value)
             }
-            className="cursor-pointer bg-[#faf7f2] border border-[#d6cec2] rounded-2xl px-4 py-4"
+            className="cursor-pointer bg-[#faf7f2] border border-[#d0c7bb] rounded-2xl px-4 py-4 text-[#2f2a24]"
           >
             <option value="all">
               All Subtypes
@@ -368,12 +368,12 @@ export default function DiscoverPage() {
                     {pedal.brand_name}
                   </p>
 
-                  <h2 className="text-2xl font-serif font-medium text-[#3d3935] leading-none mb-3">
+                  <h2 className="text-2xl font-serif font-medium text-[#2f2a24] leading-none mb-3">
                     {pedal.name}
                   </h2>
 
                   <div className="mb-4 space-y-1">
-                    <p className="text-xs text-[#4f4942]">
+                    <p className="text-xs text-[#3f3932]">
                       {pedal.type_name}
                     </p>
 
@@ -398,8 +398,8 @@ export default function DiscoverPage() {
                       className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
                         pedal.status ===
                         'have'
-                          ? 'bg-[#3d3935] text-[#f8f5ef]'
-                          : 'bg-[#faf7f2] border border-[#d6cec2]'
+                          ? 'bg-[#2f2a24] text-[#f8f5ef]'
+                          : 'bg-[#faf7f2] border border-[#d0c7bb]'
                       }`}
                     >
                       Have
@@ -415,8 +415,8 @@ export default function DiscoverPage() {
                       className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
                         pedal.status ===
                         'had'
-                          ? 'bg-[#3d3935] text-[#f8f5ef]'
-                          : 'bg-[#faf7f2] border border-[#d6cec2]'
+                          ? 'bg-[#2f2a24] text-[#f8f5ef]'
+                          : 'bg-[#faf7f2] border border-[#d0c7bb]'
                       }`}
                     >
                       Had
@@ -432,8 +432,8 @@ export default function DiscoverPage() {
                       className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
                         pedal.status ===
                         'want'
-                          ? 'bg-[#3d3935] text-[#f8f5ef]'
-                          : 'bg-[#faf7f2] border border-[#d6cec2]'
+                          ? 'bg-[#2f2a24] text-[#f8f5ef]'
+                          : 'bg-[#faf7f2] border border-[#d0c7bb]'
                       }`}
                     >
                       Want
@@ -450,14 +450,14 @@ export default function DiscoverPage() {
           <div className="max-w-md mx-auto flex justify-around py-4 text-sm">
             <Link
               href="/discover"
-              className="cursor-pointer text-[#3d3935] font-medium"
+              className="cursor-pointer text-[#2f2a24] font-medium"
             >
               Discover
             </Link>
 
             <Link
               href="/collection"
-              className="cursor-pointer text-[#8c8479]"
+              className="cursor-pointer text-[#6f675f]"
             >
               Collection
             </Link>
