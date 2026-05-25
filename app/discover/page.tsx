@@ -398,7 +398,7 @@ export default function DiscoverPage() {
                       className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
                         pedal.status ===
                         'have'
-                          ? 'bg-[#26211d] text-[#26211d]'
+                          ? 'bg-[#26211d] text-[#f8f5ef]'
                           : 'bg-[#faf7f2] border border-[#c8beb1]'
                       }`}
                     >
@@ -415,7 +415,7 @@ export default function DiscoverPage() {
                       className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
                         pedal.status ===
                         'had'
-                          ? 'bg-[#26211d] text-[#26211d]'
+                          ? 'bg-[#26211d] text-[#f8f5ef]'
                           : 'bg-[#faf7f2] border border-[#c8beb1]'
                       }`}
                     >
@@ -432,7 +432,7 @@ export default function DiscoverPage() {
                       className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
                         pedal.status ===
                         'want'
-                          ? 'bg-[#26211d] text-[#26211d]'
+                          ? 'bg-[#26211d] text-[#f8f5ef]'
                           : 'bg-[#faf7f2] border border-[#c8beb1]'
                       }`}
                     >
