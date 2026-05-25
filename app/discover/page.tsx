@@ -264,23 +264,21 @@ export default function DiscoverPage() {
     <main className="min-h-screen bg-[#f5f1ea] flex justify-center">
       <div className="w-full max-w-md px-5 py-8">
         {/* HEADER */}
-        <div className="mb-6">
-          
+<div className="mb-8">
   <img
     src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
     alt="Patchlog"
-    className="w-full object-contain"
+    className="w-full scale-125 object-contain mb-6"
   />
+
+  <h1 className="text-4xl font-serif font-medium text-[#3d3935] leading-none mb-3">
+    Discover
+  </h1>
+
+  <p className="text-[#4f4942]">
+    Explore the world of pedals.
+  </p>
 </div>
-
-          <h1 className="text-4xl font-serif font-medium text-[#3d3935] leading-none mb-3">
-            Discover
-          </h1>
-
-          <p className="text-[#4f4942]">
-            Explore the world of pedals.
-          </p>
-        </div>
 
         {/* FILTERS */}
         <div className="grid grid-cols-2 gap-3 mb-3">
