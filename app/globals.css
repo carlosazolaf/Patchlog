@@ -4,24 +4,16 @@
   --background: #f5f1ea;
 
   --foreground: #26211d;
-
-  --card: #faf7f2;
-
-  --card-soft: #f3efe8;
-
-  --border: #c8beb1;
-
-  --text-primary: #26211d;
-
-  --text-secondary: #5e564d;
-
-  --text-soft: #7a7064;
 }
 
-html {
-  background: var(--background);
+@theme inline {
+  --color-background: var(--background);
 
-  overflow-x: hidden;
+  --color-foreground: var(--foreground);
+
+  --font-sans: var(--font-geist-sans);
+
+  --font-mono: var(--font-geist-mono);
 }
 
 body {
@@ -39,31 +31,11 @@ body {
 }
 
 /*
-  LINKS
+  MOBILE FIXES
 */
 
-a {
-  text-decoration: none;
-
-  color: inherit;
-}
-
-/*
-  BUTTONS
-*/
-
-button {
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease,
-    opacity 0.15s ease;
-
-  -webkit-tap-highlight-color: transparent;
-}
-
-button:hover {
-  opacity: 0.92;
+html {
+  overflow-x: hidden;
 }
 
 /*
@@ -72,82 +44,25 @@ button:hover {
 
 select,
 input {
-  outline: none;
+  color: #26211d;
 
-  appearance: none;
-
-  -webkit-appearance: none;
-
-  background: var(--card);
-
-  color: var(--text-primary);
-
-  border: 1px solid var(--border);
-
-  border-radius: 1rem;
-
-  font-size: 16px;
+  border-color: #c8beb1;
 }
 
 /*
-  PLACEHOLDER
+  BUTTONS
 */
 
-::placeholder {
-  color: var(--text-soft);
+button {
+  -webkit-tap-highlight-color: transparent;
 }
 
 /*
-  SCROLLBAR
+  TEXT SELECTION
 */
 
-::-webkit-scrollbar {
-  width: 10px;
-}
+::selection {
+  background: #d8cec0;
 
-::-webkit-scrollbar-track {
-  background: var(--background);
-}
-
-::-webkit-scrollbar-thumb {
-  background: #d5ccbf;
-
-  border-radius: 999px;
-}
-
-/*
-  TYPOGRAPHY
-*/
-
-h1,
-h2,
-h3 {
-  color: var(--text-primary);
-
-  letter-spacing: -0.02em;
-}
-
-p {
-  color: var(--text-secondary);
-}
-
-/*
-  MOBILE
-*/
-
-@media (max-width: 640px) {
-  body {
-    font-size: 15px;
-  }
-
-  button {
-    font-size: 14px;
-
-    font-weight: 500;
-  }
-
-  select,
-  input {
-    font-size: 16px;
-  }
+  color: #26211d;
 }
