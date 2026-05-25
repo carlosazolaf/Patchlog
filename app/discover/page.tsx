@@ -236,11 +236,11 @@ export default function DiscoverPage() {
     <main className="min-h-screen bg-[#f5f1ea] flex justify-center">
       <div className="w-full max-w-md px-5 py-8">
         {/* HEADER */}
-        <div className="mb-8">
+        <div className="mb-8 -mx-5">
           <img
             src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
             alt="Patchlog"
-            className="w-full scale-125 object-contain mb-6"
+            className="w-full scale-1.55 object-contain mb-8"
           />
 
           <h1 className="text-4xl font-serif font-medium text-[#3d3935] leading-none mb-3">
