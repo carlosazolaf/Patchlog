@@ -364,7 +364,7 @@ export default function CollectionPage() {
   <img
     src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
     alt="Patchlog"
-    className="w-44 object-contain"
+    className="w-full max-w-[320px] object-contain"
   />
 </div>
 
