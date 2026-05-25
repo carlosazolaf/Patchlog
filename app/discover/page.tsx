@@ -240,7 +240,7 @@ export default function DiscoverPage() {
           <img
             src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
             alt="Patchlog"
-            className="w-[92%] mx-auto object-contain mb-5"2
+            className="w-[92%] mx-auto object-contain mb-5"
           />
 
           <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none mb-2">
@@ -373,7 +373,7 @@ export default function DiscoverPage() {
                   </h2>
 
                   <div className="mb-4 space-y-1">
-                    <p className="text-xs text-[#3f3932]">
+                    <p className="text-xs text-[#3a342e]">
                       {pedal.type_name}
                     </p>
 
@@ -395,10 +395,10 @@ export default function DiscoverPage() {
                           'have'
                         )
                       }
-                      className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
+                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
                         pedal.status ===
                         'have'
-                          ? 'bg-[#2f2a24] text-[#f8f5ef]'
+                          ? 'bg-[#26211d] text-[#f8f5ef]'
                           : 'bg-[#faf7f2] border border-[#c8beb1]'
                       }`}
                     >
@@ -412,10 +412,10 @@ export default function DiscoverPage() {
                           'had'
                         )
                       }
-                      className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
+                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
                         pedal.status ===
                         'had'
-                          ? 'bg-[#2f2a24] text-[#f8f5ef]'
+                          ? 'bg-[#26211d] text-[#f8f5ef]'
                           : 'bg-[#faf7f2] border border-[#c8beb1]'
                       }`}
                     >
@@ -429,10 +429,10 @@ export default function DiscoverPage() {
                           'want'
                         )
                       }
-                      className={`cursor-pointer text-xs px-3 py-2 rounded-full ${
+                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
                         pedal.status ===
                         'want'
-                          ? 'bg-[#2f2a24] text-[#f8f5ef]'
+                          ? 'bg-[#26211d] text-[#f8f5ef]'
                           : 'bg-[#faf7f2] border border-[#c8beb1]'
                       }`}
                     >
