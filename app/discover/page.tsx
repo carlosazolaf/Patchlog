@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 
 export default function DiscoverPage() {
@@ -12,9 +12,7 @@ export default function DiscoverPage() {
   const [types, setTypes] = useState<any[]>([])
   const [subtypes, setSubtypes] = useState<any[]>([])
 
-  /*
-    FILTERS (Inicializados de forma segura para evitar errores de servidor)
-  */
+  /* Filtros */
   const [brandFilter, setBrandFilter] = useState('all')
   const [modelFilter, setModelFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
@@ -22,9 +20,7 @@ export default function DiscoverPage() {
 
   const [isLoaded, setIsLoaded] = useState(false)
 
-  /*
-    1. CARGAR FILTROS DESDE SESSION STORAGE (Solo en el Cliente)
-  */
+  /* 1. Cargar filtros iniciales desde sessionStorage (Solo Cliente) */
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedBrand = sessionStorage.getItem('discover_brandFilter')
@@ -41,62 +37,18 @@ export default function DiscoverPage() {
     }
   }, [])
 
-  /*
-    2. CARGAR DATOS CUANDO LOS FILTROS ESTÉN LISTOS
-  */
-  useEffect(() => {
-    if (isLoaded) {
-      fetchData()
-    }
-  }, [brandFilter, modelFilter, typeFilter, subtypeFilter, isLoaded])
-
-  /*
-    3. GUARDAR FILTROS EN SESSION STORAGE AL CAMBIAR
-  */
-  useEffect(() => {
-    if (isLoaded) {
-      sessionStorage.setItem('discover_brandFilter', brandFilter)
-      sessionStorage.setItem('discover_modelFilter', modelFilter)
-      sessionStorage.setItem('discover_typeFilter', typeFilter)
-      sessionStorage.setItem('discover_subtypeFilter', subtypeFilter)
-    }
-  }, [brandFilter, modelFilter, typeFilter, subtypeFilter, isLoaded])
-
-  // Capturar scroll antes de cambiar de página
-  useEffect(() => {
-    const handleScroll = () => {
-      sessionStorage.setItem('discover_scroll_pos', window.scrollY.toString())
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  // Restaurar posición de scroll cuando los datos estén en el DOM
-  useEffect(() => {
-    if (pedals.length > 0 && isLoaded) {
-      const savedScroll = sessionStorage.getItem('discover_scroll_pos')
-      if (savedScroll) {
-        setTimeout(() => {
-          window.scrollTo(0, parseInt(savedScroll, 10))
-        }, 60)
-      }
-    }
-  }, [pedals, isLoaded])
-
-  /*
-    FETCH
-  */
-  async function fetchData() {
+  /* 2. Función de carga de datos memorizada para evitar bucles infinitos */
+  const fetchData = useCallback(async (currentBrand: string, currentModel: string, currentType: string, currentSubtype: string) => {
     let pedalsQuery = supabase
       .from('pedals')
       .select('*')
       .order('name', { ascending: true })
       .limit(300)
 
-    if (brandFilter !== 'all') pedalsQuery = pedalsQuery.eq('brand_id', brandFilter)
-    if (modelFilter !== 'all') pedalsQuery = pedalsQuery.eq('pedal_id', modelFilter)
-    if (typeFilter !== 'all') pedalsQuery = pedalsQuery.eq('type_id', typeFilter)
-    if (subtypeFilter !== 'all') pedalsQuery = pedalsQuery.eq('subtype_id', subtypeFilter)
+    if (currentBrand !== 'all') pedalsQuery = pedalsQuery.eq('brand_id', currentBrand)
+    if (currentModel !== 'all') pedalsQuery = pedalsQuery.eq('pedal_id', currentModel)
+    if (currentType !== 'all') pedalsQuery = pedalsQuery.eq('type_id', currentType)
+    if (currentSubtype !== 'all') pedalsQuery = pedalsQuery.eq('subtype_id', currentSubtype)
 
     const { data: pedalsData } = await pedalsQuery
     const { data: brandsData } = await supabase.from('brand').select('*').order('brand', { ascending: true })
@@ -121,32 +73,64 @@ export default function DiscoverPage() {
 
     setPedals(enriched)
     setUserPedals(userPedalsData || [])
-
-    const filteredTypes = [
-      ...new Map(enriched.map((p) => [p.type_id, { type_id: p.type_id, type: p.type_name }])).values()
-    ]
-    const filteredSubtypes = [
-      ...new Map(enriched.map((p) => [p.subtype_id, { subtype_id: p.subtype_id, subtype: p.subtype_name }])).values()
-    ]
-
     setBrands(brandsData || [])
-    setTypes(filteredTypes)
-    setSubtypes(filteredSubtypes)
-  }
+    setTypes(typesData || [])
+    setSubtypes(subtypesData || [])
+  }, [])
 
-  async function setStatus(pedalId: number, status: string) {
+  /* 3. Trigger de peticiones y persistencia cuando los filtros cambian */
+  useEffect(() => {
+    if (isLoaded) {
+      fetchData(brandFilter, modelFilter, typeFilter, subtypeFilter)
+      sessionStorage.setItem('discover_brandFilter', brandFilter)
+      sessionStorage.setItem('discover_modelFilter', modelFilter)
+      sessionStorage.setItem('discover_typeFilter', typeFilter)
+      sessionStorage.setItem('discover_subtypeFilter', subtypeFilter)
+    }
+  }, [brandFilter, modelFilter, typeFilter, subtypeFilter, isLoaded, fetchData])
+
+  /* 4. Captura de Scroll */
+  useEffect(() => {
+    const handleScroll = () => {
+      sessionStorage.setItem('discover_scroll_pos', window.scrollY.toString())
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  /* 5. Restauración de Scroll */
+  useEffect(() => {
+    if (pedals.length > 0 && isLoaded) {
+      const savedScroll = sessionStorage.getItem('discover_scroll_pos')
+      if (savedScroll) {
+        setTimeout(() => {
+          window.scrollTo(0, parseInt(savedScroll, 10))
+        }, 50)
+      }
+    }
+  }, [pedals, isLoaded])
+
+  const handleStatusChange = async (pedalId: number, status: string) => {
     const existing = userPedals.find((p) => Number(p.pedal_id) === Number(pedalId))
     if (existing) {
       await supabase.from('user_pedals').update({ status }).eq('pedal_id', pedalId)
     } else {
       await supabase.from('user_pedals').insert({ pedal_id: pedalId, status })
     }
-    fetchData()
+    fetchData(brandFilter, modelFilter, typeFilter, subtypeFilter)
   }
 
   const models = useMemo(() => {
     return [...pedals].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
   }, [pedals])
+
+  if (!isLoaded) {
+    return (
+      <main className="min-h-screen bg-[#f5f1ea] flex items-center justify-center">
+        <p className="text-[#5b544c] font-serif">Loading patchlog...</p>
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-screen bg-[#f5f1ea] flex justify-center overflow-x-hidden">
@@ -237,15 +221,15 @@ export default function DiscoverPage() {
                   </div>
                   <div className="flex flex-wrap gap-2" onClick={(e) => e.preventDefault()}>
                     <button
-                      onClick={() => setStatus(pedal.pedal_id, 'have')}
+                      onClick={() => handleStatusChange(pedal.pedal_id, 'have')}
                       className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${pedal.status === 'have' ? 'bg-[#26211d] text-[#f8f5ef]' : 'bg-[#faf7f2] border border-[#c8beb1]'}`}
                     >Have</button>
                     <button
-                      onClick={() => setStatus(pedal.pedal_id, 'had')}
+                      onClick={() => handleStatusChange(pedal.pedal_id, 'had')}
                       className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${pedal.status === 'had' ? 'bg-[#26211d] text-[#f8f5ef]' : 'bg-[#faf7f2] border border-[#c8beb1]'}`}
                     >Had</button>
                     <button
-                      onClick={() => setStatus(pedal.pedal_id, 'want')}
+                      onClick={() => handleStatusChange(pedal.pedal_id, 'want')}
                       className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${pedal.status === 'want' ? 'bg-[#26211d] text-[#f8f5ef]' : 'bg-[#faf7f2] border border-[#c8beb1]'}`}
                     >Want</button>
                   </div>
