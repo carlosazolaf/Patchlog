@@ -318,7 +318,7 @@ export default function CollectionPage() {
 
                   <div
                     className="flex flex-wrap gap-2"
-                    onClick={(e) => e.preventDefault()}
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <button
                       onClick={() => moveStatus(pedal.pedal_id, 'have')}
