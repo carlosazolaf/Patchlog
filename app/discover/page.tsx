@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
+import { supabase } from '@/lib/supabase';
 import PedalCard from '@/components/PedalCard';
 import FiltersBar from '@/components/FiltersBar';
 import { useDiscoverState } from '@/app/hooks/useDiscoverState';
 
 export default function DiscoverPage() {
   const router = useRouter();
-  const supabase = createClient();
 
   // -----------------------------
   // FILTROS
@@ -54,7 +53,7 @@ export default function DiscoverPage() {
     }
 
     load();
-  }, [brandFilter, modelFilter, typeFilter, subtypeFilter, supabase]);
+  }, [brandFilter, modelFilter, typeFilter, subtypeFilter]);
 
   // -----------------------------
   // OPEN PEDAL (guardar scroll)
