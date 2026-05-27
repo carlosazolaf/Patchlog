@@ -13,6 +13,7 @@ export default function CollectionPage() {
   const [brands, setBrands] = useState<any[]>([])
   const [types, setTypes] = useState<any[]>([])
   const [subtypes, setSubtypes] = useState<any[]>([])
+  const [pendingScroll, setPendingScroll] = useState<number | null>(null)
 
   const [statusFilter, setStatusFilter] = useState('all')
   const [brandFilter, setBrandFilter] = useState('all')
@@ -45,11 +46,19 @@ export default function CollectionPage() {
     const savedScroll = sessionStorage.getItem('collection_scrollY')
     if (savedScroll) {
       sessionStorage.removeItem('collection_scrollY')
-      setTimeout(() => {
-        window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' })
-      }, 80)
+      setPendingScroll(parseInt(savedScroll))
     }
   }, [])
+
+  /*
+    EXECUTE SCROLL AFTER PEDALS RENDER
+  */
+  useEffect(() => {
+    if (pendingScroll === null) return
+    if (pedals.length === 0) return
+    window.scrollTo({ top: pendingScroll, behavior: 'instant' })
+    setPendingScroll(null)
+  }, [pedals, pendingScroll])
 
   /*
     LOAD
@@ -69,8 +78,8 @@ export default function CollectionPage() {
     setCounts({
       all: allStatuses?.length || 0,
       have: allStatuses?.filter((p) => p.status === 'have').length || 0,
-      had: allStatuses?.filter((p) => p.status === 'had').length || 0,
-      want: allStatuses?.filter((p) => p.status === 'want').length || 0
+      had:  allStatuses?.filter((p) => p.status === 'had').length  || 0,
+      want: allStatuses?.filter((p) => p.status === 'want').length || 0,
     })
 
     if (statusFilter !== 'all') {
@@ -317,66 +326,3 @@ export default function CollectionPage() {
                   </div>
 
                   <div
-                    className="flex flex-wrap gap-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      onClick={() => moveStatus(pedal.pedal_id, 'have')}
-                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
-                        pedal.status === 'have'
-                          ? 'bg-[#26211d] text-[#f8f5ef]'
-                          : 'bg-[#faf7f2] border border-[#c8beb1]'
-                      }`}
-                    >
-                      Have
-                    </button>
-                    <button
-                      onClick={() => moveStatus(pedal.pedal_id, 'had')}
-                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
-                        pedal.status === 'had'
-                          ? 'bg-[#26211d] text-[#f8f5ef]'
-                          : 'bg-[#faf7f2] border border-[#c8beb1]'
-                      }`}
-                    >
-                      Had
-                    </button>
-                    <button
-                      onClick={() => moveStatus(pedal.pedal_id, 'want')}
-                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
-                        pedal.status === 'want'
-                          ? 'bg-[#26211d] text-[#f8f5ef]'
-                          : 'bg-[#faf7f2] border border-[#c8beb1]'
-                      }`}
-                    >
-                      Want
-                    </button>
-                    <button
-                      onClick={() => removePedal(pedal.pedal_id)}
-                      className="cursor-pointer text-sm font-medium px-3 py-2 rounded-full bg-red-100 text-red-700"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* NAV */}
-        <div className="fixed bottom-0 left-0 right-0 bg-[#f5f1ea]/95 backdrop-blur border-t border-[#e8e1d8]">
-          <div className="max-w-md mx-auto flex justify-around py-4 text-sm">
-            <Link href="/discover" className="cursor-pointer text-[#5b544c]">
-              Discover
-            </Link>
-            <Link href="/collection" className="cursor-pointer text-[#26211d] font-medium">
-              Collection
-            </Link>
-          </div>
-        </div>
-
-        <div className="h-24" />
-      </div>
-    </main>
-  )
-}
