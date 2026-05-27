@@ -311,7 +311,7 @@ export default function DiscoverPage() {
 
                   <div
                     className="flex flex-wrap gap-2"
-                    onClick={(e) => e.preventDefault()}
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <button
                       onClick={() => setStatus(pedal.pedal_id, 'have')}
