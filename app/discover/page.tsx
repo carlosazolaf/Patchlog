@@ -1,34 +1,53 @@
-'use client'
+'use client';
 
-import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useEffect, useRef } from 'react';
 
-export default function DiscoverPage() {
-  const [pedals, setPedals] = useState<any[]>([])
-  const [userPedals, setUserPedals] =
-    useState<any[]>([])
+type DiscoverFilters = {
+  brandFilter: string;
+  modelFilter: string;
+  typeFilter: string;
+  subtypeFilter: string;
+};
 
-  const [brands, setBrands] = useState<any[]>([])
-  const [types, setTypes] = useState<any[]>([])
-  const [subtypes, setSubtypes] =
-    useState<any[]>([])
+export function useDiscoverState(
+  filters: DiscoverFilters,
+  setAllFilters: (f: DiscoverFilters) => void
+) {
+  const restored = useRef(false);
 
-  /*
-    FILTERS
-  */
+  // Restaurar al montar
+  useEffect(() => {
+    if (restored.current) return;
 
-  const [brandFilter, setBrandFilter] =
-    useState('all')
+    const raw = sessionStorage.getItem('discover-state');
+    if (!raw) return;
 
-  const [modelFilter, setModelFilter] =
-    useState('all')
+    try {
+      const parsed = JSON.parse(raw);
 
-  const [typeFilter, setTypeFilter] =
-    useState('all')
+      if (parsed.filters) {
+        setAllFilters(parsed.filters);
+      }
 
-  const [subtypeFilter, setSubtypeFilter] =
-    useState('all')
+      requestAnimationFrame(() => {
+        window.scrollTo(0, parsed.scrollY || 0);
+      });
+
+      restored.current = true;
+    } catch {}
+  }, [setAllFilters]);
+
+  // Guardar en cada cambio de filtros
+  useEffect(() => {
+    const current = {
+      scrollY: window.scrollY,
+      filters,
+    };
+
+    sessionStorage.setItem('discover-state', JSON.stringify(current));
+  }, [filters]);
+}
+
 
   /*
     LOAD
