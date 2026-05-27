@@ -1,53 +1,50 @@
-'use client';
+'use client'
 
-import { useEffect, useRef } from 'react';
+import Link from 'next/link'
+import { useEffect, useMemo, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
-type DiscoverFilters = {
-  brandFilter: string;
-  modelFilter: string;
-  typeFilter: string;
-  subtypeFilter: string;
-};
+export default function DiscoverPage() {
+  const [pedals, setPedals] = useState<any[]>([])
+  const [userPedals, setUserPedals] =
+    useState<any[]>([])
 
-export function useDiscoverState(
-  filters: DiscoverFilters,
-  setAllFilters: (f: DiscoverFilters) => void
-) {
-  const restored = useRef(false);
+  const [brands, setBrands] = useState<any[]>([])
+  const [types, setTypes] = useState<any[]>([])
+  const [subtypes, setSubtypes] =
+    useState<any[]>([])
 
-  // Restaurar al montar
-  useEffect(() => {
-    if (restored.current) return;
+  /*
+    FILTERS
+  */
 
-    const raw = sessionStorage.getItem('discover-state');
-    if (!raw) return;
+  const [brandFilter, setBrandFilter] =
+    useState('all')
 
-    try {
-      const parsed = JSON.parse(raw);
+  const [modelFilter, setModelFilter] =
+    useState('all')
 
-      if (parsed.filters) {
-        setAllFilters(parsed.filters);
-      }
+  const [typeFilter, setTypeFilter] =
+    useState('all')
 
-      requestAnimationFrame(() => {
-        window.scrollTo(0, parsed.scrollY || 0);
-      });
+  const [subtypeFilter, setSubtypeFilter] =
+    useState('all')
+import { useDiscoverState } from '@/hooks/useDiscoverState';
 
-      restored.current = true;
-    } catch {}
-  }, [setAllFilters]);
-
-  // Guardar en cada cambio de filtros
-  useEffect(() => {
-    const current = {
-      scrollY: window.scrollY,
-      filters,
-    };
-
-    sessionStorage.setItem('discover-state', JSON.stringify(current));
-  }, [filters]);
-}
-
+useDiscoverState(
+  {
+    brandFilter,
+    modelFilter,
+    typeFilter,
+    subtypeFilter,
+  },
+  (restored) => {
+    setBrandFilter(restored.brandFilter || 'all');
+    setModelFilter(restored.modelFilter || 'all');
+    setTypeFilter(restored.typeFilter || 'all');
+    setSubtypeFilter(restored.subtypeFilter || 'all');
+  }
+);
 
   /*
     LOAD
