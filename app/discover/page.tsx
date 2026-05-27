@@ -189,7 +189,7 @@ export default function DiscoverPage() {
     setSubtypes(filteredSubtypes)
   }
 
-  /*
+ /*
     STATUS (Con opción de des-seleccionar)
   */
   async function setStatus(pedalId: number, status: string) {
@@ -221,8 +221,8 @@ export default function DiscoverPage() {
         })
     }
 
-    // Refrescamos los datos manteniendo los filtros actuales en pantalla
-    fetchData(brandFilter, modelFilter, typeFilter, subtypeFilter)
+    // Refrescamos llamando a la función limpia tal y como está definida
+    fetchData()
   }
   /*
     MODELS
