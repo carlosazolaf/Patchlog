@@ -2,7 +2,17 @@
 
 import { useEffect, useRef } from 'react';
 
-export function useDiscoverState(filters: any, setFilters: (f: any) => void) {
+type DiscoverFilters = {
+  brandFilter: string;
+  modelFilter: string;
+  typeFilter: string;
+  subtypeFilter: string;
+};
+
+export function useDiscoverState(
+  filters: DiscoverFilters,
+  setAllFilters: (f: DiscoverFilters) => void
+) {
   const restored = useRef(false);
 
   // Restaurar al montar
@@ -16,7 +26,7 @@ export function useDiscoverState(filters: any, setFilters: (f: any) => void) {
       const parsed = JSON.parse(raw);
 
       if (parsed.filters) {
-        setFilters(parsed.filters);
+        setAllFilters(parsed.filters);
       }
 
       requestAnimationFrame(() => {
@@ -25,7 +35,7 @@ export function useDiscoverState(filters: any, setFilters: (f: any) => void) {
 
       restored.current = true;
     } catch {}
-  }, [setFilters]);
+  }, [setAllFilters]);
 
   // Guardar en cada cambio de filtros
   useEffect(() => {
