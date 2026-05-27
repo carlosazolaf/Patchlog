@@ -107,16 +107,13 @@ export default async function PedalDetailPage({
       <div className="w-full max-w-md px-5 py-8">
 
         {/* HEADER */}
-        <div className="flex items-center gap-2 mb-8">
-          <img
-            src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
-            alt="Patchlog"
-            className="w-8 h-8 object-contain"
-          />
-          <p className="text-sm tracking-[0.35em] uppercase text-[#4f4942]">
-            PATCHLOG
-          </p>
-        </div>
+<div className="mb-8">
+  <img
+    src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
+    alt="Patchlog"
+    className="w-[92%] mx-auto object-contain mb-5"
+  />
+</div>
 
         {/* BACK */}
         <div className="mb-8">
