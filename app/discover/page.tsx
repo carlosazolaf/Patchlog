@@ -14,6 +14,8 @@ export default function DiscoverPage() {
   const [brands, setBrands] = useState<any[]>([])
   const [types, setTypes] = useState<any[]>([])
   const [subtypes, setSubtypes] = useState<any[]>([])
+  const [counts, setCounts] = useState({ all: 0, have: 0, had: 0, want: 0 })
+  const [pendingScroll, setPendingScroll] = useState<number | null>(null)
 
   /*
     FILTERS
@@ -22,7 +24,7 @@ export default function DiscoverPage() {
   const [modelFilter, setModelFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
   const [subtypeFilter, setSubtypeFilter] = useState('all')
-const [counts, setCounts] = useState({ all: 0, have: 0, had: 0, want: 0 })
+
   /*
     RESTORE SCROLL & FILTERS
   */
@@ -45,11 +47,19 @@ const [counts, setCounts] = useState({ all: 0, have: 0, had: 0, want: 0 })
     const savedScroll = sessionStorage.getItem('discover_scrollY')
     if (savedScroll) {
       sessionStorage.removeItem('discover_scrollY')
-      setTimeout(() => {
-        window.scrollTo({ top: parseInt(savedScroll), behavior: 'instant' })
-      }, 80)
+      setPendingScroll(parseInt(savedScroll))
     }
   }, [])
+
+  /*
+    EXECUTE SCROLL AFTER PEDALS RENDER
+  */
+  useEffect(() => {
+    if (pendingScroll === null) return
+    if (pedals.length === 0) return
+    window.scrollTo({ top: pendingScroll, behavior: 'instant' })
+    setPendingScroll(null)
+  }, [pedals, pendingScroll])
 
   /*
     LOAD
@@ -129,11 +139,11 @@ const [counts, setCounts] = useState({ all: 0, have: 0, had: 0, want: 0 })
     setUserPedals(userPedalsData || [])
 
     setCounts({
-  all: userPedalsData?.length || 0,
-  have: userPedalsData?.filter((p) => p.status === 'have').length || 0,
-  had:  userPedalsData?.filter((p) => p.status === 'had').length  || 0,
-  want: userPedalsData?.filter((p) => p.status === 'want').length || 0,
-})
+      all: userPedalsData?.length || 0,
+      have: userPedalsData?.filter((p) => p.status === 'have').length || 0,
+      had:  userPedalsData?.filter((p) => p.status === 'had').length  || 0,
+      want: userPedalsData?.filter((p) => p.status === 'want').length || 0,
+    })
 
     const filteredTypes = [
       ...new Map(
@@ -195,29 +205,29 @@ const [counts, setCounts] = useState({ all: 0, have: 0, had: 0, want: 0 })
       <div className="w-full max-w-md px-6 py-4">
 
         {/* HEADER */}
-<div className="sticky top-0 z-10 bg-[#f5f1ea] pb-4 mb-4">
-  <img
-    src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
-    alt="Patchlog"
-    className="w-[92%] mx-auto object-contain mb-5 pt-4"
-  />
-  <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none mb-2">
-    Discover
-  </h1>
-  <p className="text-[#3a342e] text-base mb-4">
-    Explore the world of pedals.
-  </p>
-  <div className="flex flex-wrap gap-2">
-    {(['all', 'have', 'had', 'want'] as const).map((s) => (
-      <div
-        key={s}
-        className="px-4 py-3 rounded-full text-sm font-medium capitalize bg-[#faf7f2] border border-[#c8beb1] text-[#26211d]"
-      >
-        {s} ({counts[s]})
-      </div>
-    ))}
-  </div>
-</div>
+        <div className="sticky top-0 z-10 bg-[#f5f1ea] pb-4 mb-4">
+          <img
+            src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
+            alt="Patchlog"
+            className="w-[92%] mx-auto object-contain mb-5 pt-4"
+          />
+          <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none mb-2">
+            Discover
+          </h1>
+          <p className="text-[#3a342e] text-base mb-4">
+            Explore the world of pedals.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(['all', 'have', 'had', 'want'] as const).map((s) => (
+              <div
+                key={s}
+                className="px-4 py-3 rounded-full text-sm font-medium capitalize bg-[#faf7f2] border border-[#c8beb1] text-[#26211d]"
+              >
+                {s} ({counts[s]})
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* FILTERS */}
         <div className="grid grid-cols-2 gap-3 mb-3">
