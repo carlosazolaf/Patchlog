@@ -6,66 +6,61 @@ import { supabase } from '@/lib/supabase'
 
 export default function DiscoverPage() {
   const [pedals, setPedals] = useState<any[]>([])
-  const [userPedals, setUserPedals] =
-    useState<any[]>([])
+  const [userPedals, setUserPedals] = useState<any[]>([])
 
   const [brands, setBrands] = useState<any[]>([])
   const [types, setTypes] = useState<any[]>([])
-  const [subtypes, setSubtypes] =
-    useState<any[]>([])
+  const [subtypes, setSubtypes] = useState<any[]>([])
 
   /*
-    FILTERS
+    FILTERS (Inicializados de forma segura para evitar errores de servidor)
   */
+  const [brandFilter, setBrandFilter] = useState('all')
+  const [modelFilter, setModelFilter] = useState('all')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [subtypeFilter, setSubtypeFilter] = useState('all')
 
-  const [brandFilter, setBrandFilter] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('discover_brandFilter') || 'all'
-    }
-    return 'all'
-  })
-
-  const [modelFilter, setModelFilter] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('discover_modelFilter') || 'all'
-    }
-    return 'all'
-  })
-
-  const [typeFilter, setTypeFilter] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('discover_typeFilter') || 'all'
-    }
-    return 'all'
-  })
-
-  const [subtypeFilter, setSubtypeFilter] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('discover_subtypeFilter') || 'all'
-    }
-    return 'all'
-  })
+  const [isLoaded, setIsLoaded] = useState(false)
 
   /*
-    LOAD
+    1. CARGAR FILTROS DESDE SESSION STORAGE (Solo en el Cliente)
   */
-
   useEffect(() => {
-    fetchData()
-  }, [
-    brandFilter,
-    modelFilter,
-    typeFilter,
-    subtypeFilter
-  ])
+    if (typeof window !== 'undefined') {
+      const savedBrand = sessionStorage.getItem('discover_brandFilter')
+      const savedModel = sessionStorage.getItem('discover_modelFilter')
+      const savedType = sessionStorage.getItem('discover_typeFilter')
+      const savedSubtype = sessionStorage.getItem('discover_subtypeFilter')
 
-  // Sincronizar filtros en sessionStorage
+      if (savedBrand) setBrandFilter(savedBrand)
+      if (savedModel) setModelFilter(savedModel)
+      if (savedType) setTypeFilter(savedType)
+      if (savedSubtype) setSubtypeFilter(savedSubtype)
+      
+      setIsLoaded(true)
+    }
+  }, [])
+
+  /*
+    2. CARGAR DATOS CUANDO LOS FILTROS ESTÉN LISTOS
+  */
   useEffect(() => {
-    sessionStorage.setItem('discover_brandFilter', brandFilter)
-    sessionStorage.setItem('discover_modelFilter', modelFilter)
-    sessionStorage.setItem('discover_typeFilter', typeFilter)
-    sessionStorage.setItem('discover_subtypeFilter', subtypeFilter)
-  }, [brandFilter, modelFilter, typeFilter, subtypeFilter])
+    if (isLoaded) {
+      fetchData()
+    }
+  }, [brandFilter, modelFilter, typeFilter, subtypeFilter, isLoaded])
+
+  /*
+    3. GUARDAR FILTROS EN SESSION STORAGE AL CAMBIAR
+  */
+  useEffect(() => {
+    if (isLoaded) {
+      sessionStorage.setItem('discover_brandFilter', brandFilter)
+      sessionStorage.setItem('discover_modelFilter', modelFilter)
+      sessionStorage.setItem('discover_typeFilter', typeFilter)
+      sessionStorage.setItem('discover_subtypeFilter', subtypeFilter)
+    }
+  }, [brandFilter, modelFilter, typeFilter, subtypeFilter, isLoaded])
 
   // Capturar scroll antes de cambiar de página
   useEffect(() => {
@@ -76,9 +71,9 @@ export default function DiscoverPage() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Restaurar posición de scroll cuando los datos estén listos en el DOM
+  // Restaurar posición de scroll cuando los datos estén en el DOM
   useEffect(() => {
-    if (pedals.length > 0) {
+    if (pedals.length > 0 && isLoaded) {
       const savedScroll = sessionStorage.getItem('discover_scroll_pos')
       if (savedScroll) {
         setTimeout(() => {
@@ -86,147 +81,52 @@ export default function DiscoverPage() {
         }, 60)
       }
     }
-  }, [pedals])
+  }, [pedals, isLoaded])
 
   /*
     FETCH
   */
-
   async function fetchData() {
     let pedalsQuery = supabase
       .from('pedals')
       .select('*')
-      .order('name', {
-        ascending: true
-      })
+      .order('name', { ascending: true })
       .limit(300)
 
-    if (brandFilter !== 'all') {
-      pedalsQuery = pedalsQuery.eq(
-        'brand_id',
-        brandFilter
-      )
-    }
+    if (brandFilter !== 'all') pedalsQuery = pedalsQuery.eq('brand_id', brandFilter)
+    if (modelFilter !== 'all') pedalsQuery = pedalsQuery.eq('pedal_id', modelFilter)
+    if (typeFilter !== 'all') pedalsQuery = pedalsQuery.eq('type_id', typeFilter)
+    if (subtypeFilter !== 'all') pedalsQuery = pedalsQuery.eq('subtype_id', subtypeFilter)
 
-    if (modelFilter !== 'all') {
-      pedalsQuery = pedalsQuery.eq(
-        'pedal_id',
-        modelFilter
-      )
-    }
+    const { data: pedalsData } = await pedalsQuery
+    const { data: brandsData } = await supabase.from('brand').select('*').order('brand', { ascending: true })
+    const { data: typesData } = await supabase.from('type').select('*').order('type', { ascending: true })
+    const { data: subtypesData } = await supabase.from('subtype').select('*').order('subtype', { ascending: true })
+    const { data: userPedalsData } = await supabase.from('user_pedals').select('*')
 
-    if (typeFilter !== 'all') {
-      pedalsQuery = pedalsQuery.eq(
-        'type_id',
-        typeFilter
-      )
-    }
+    const enriched = (pedalsData || []).map((pedal) => {
+      const brand = brandsData?.find((b) => Number(b.brand_id) === Number(pedal.brand_id))
+      const type = typesData?.find((t) => Number(t.type_id) === Number(pedal.type_id))
+      const subtype = subtypesData?.find((s) => Number(s.subtype_id) === Number(pedal.subtype_id))
+      const userPedal = userPedalsData?.find((u) => Number(u.pedal_id) === Number(pedal.pedal_id))
 
-    if (subtypeFilter !== 'all') {
-      pedalsQuery = pedalsQuery.eq(
-        'subtype_id',
-        subtypeFilter
-      )
-    }
-
-    const { data: pedalsData } =
-      await pedalsQuery
-
-    const { data: brandsData } =
-      await supabase
-        .from('brand')
-        .select('*')
-        .order('brand', {
-          ascending: true
-        })
-
-    const { data: typesData } =
-      await supabase
-        .from('type')
-        .select('*')
-        .order('type', {
-          ascending: true
-        })
-
-    const { data: subtypesData } =
-      await supabase
-        .from('subtype')
-        .select('*')
-        .order('subtype', {
-          ascending: true
-        })
-
-    const { data: userPedalsData } =
-      await supabase
-        .from('user_pedals')
-        .select('*')
-
-    const enriched = (pedalsData || []).map(
-      (pedal) => {
-        const brand = brandsData?.find(
-          (b) =>
-            Number(b.brand_id) ===
-            Number(pedal.brand_id)
-        )
-
-        const type = typesData?.find(
-          (t) =>
-            Number(t.type_id) ===
-            Number(pedal.type_id)
-        )
-
-        const subtype = subtypesData?.find(
-          (s) =>
-            Number(s.subtype_id) ===
-            Number(pedal.subtype_id)
-        )
-
-        const userPedal =
-          userPedalsData?.find(
-            (u) =>
-              Number(u.pedal_id) ===
-              Number(pedal.pedal_id)
-          )
-
-        return {
-          ...pedal,
-          brand_name:
-            brand?.brand || '',
-          type_name:
-            type?.type || '',
-          subtype_name:
-            subtype?.subtype || '',
-          status:
-            userPedal?.status || ''
-        }
+      return {
+        ...pedal,
+        brand_name: brand?.brand || '',
+        type_name: type?.type || '',
+        subtype_name: subtype?.subtype || '',
+        status: userPedal?.status || ''
       }
-    )
+    })
 
     setPedals(enriched)
     setUserPedals(userPedalsData || [])
 
     const filteredTypes = [
-      ...new Map(
-        enriched.map((p) => [
-          p.type_id,
-          {
-            type_id: p.type_id,
-            type: p.type_name
-          }
-        ])
-      ).values()
+      ...new Map(enriched.map((p) => [p.type_id, { type_id: p.type_id, type: p.type_name }])).values()
     ]
-
     const filteredSubtypes = [
-      ...new Map(
-        enriched.map((p) => [
-          p.subtype_id,
-          {
-            subtype_id: p.subtype_id,
-            subtype: p.subtype_name
-          }
-        ])
-      ).values()
+      ...new Map(enriched.map((p) => [p.subtype_id, { subtype_id: p.subtype_id, subtype: p.subtype_name }])).values()
     ]
 
     setBrands(brandsData || [])
@@ -234,47 +134,18 @@ export default function DiscoverPage() {
     setSubtypes(filteredSubtypes)
   }
 
-  /*
-    STATUS
-  */
-
-  async function setStatus(
-    pedalId: number,
-    status: string
-  ) {
-    const existing = userPedals.find(
-      (p) =>
-        Number(p.pedal_id) ===
-        Number(pedalId)
-    )
-
+  async function setStatus(pedalId: number, status: string) {
+    const existing = userPedals.find((p) => Number(p.pedal_id) === Number(pedalId))
     if (existing) {
-      await supabase
-        .from('user_pedals')
-        .update({ status })
-        .eq('pedal_id', pedalId)
+      await supabase.from('user_pedals').update({ status }).eq('pedal_id', pedalId)
     } else {
-      await supabase
-        .from('user_pedals')
-        .insert({
-          pedal_id: pedalId,
-          status
-        })
+      await supabase.from('user_pedals').insert({ pedal_id: pedalId, status })
     }
-
     fetchData()
   }
 
-  /*
-    MODELS
-  */
-
   const models = useMemo(() => {
-    return [...pedals].sort((a, b) =>
-      (a.name || '').localeCompare(
-        b.name || ''
-      )
-    )
+    return [...pedals].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
   }, [pedals])
 
   return (
@@ -287,14 +158,8 @@ export default function DiscoverPage() {
             alt="Patchlog"
             className="w-[92%] mx-auto object-contain mb-5"
           />
-
-          <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none mb-2">
-            Discover
-          </h1>
-
-          <p className="text-[#3a342e] text-base">
-            Explore the world of pedals.
-          </p>
+          <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none mb-2">Discover</h1>
+          <p className="text-[#3a342e] text-base">Explore the world of pedals.</p>
         </div>
 
         {/* FILTERS */}
@@ -309,38 +174,20 @@ export default function DiscoverPage() {
             }}
             className="cursor-pointer bg-[#faf7f2] border border-[#c8beb1] rounded-2xl px-4 py-4 text-[#26211d]"
           >
-            <option value="all">
-              All Brands
-            </option>
-
+            <option value="all">All Brands</option>
             {brands.map((brand) => (
-              <option
-                key={brand.brand_id}
-                value={brand.brand_id}
-              >
-                {brand.brand}
-              </option>
+              <option key={brand.brand_id} value={brand.brand_id}>{brand.brand}</option>
             ))}
           </select>
 
           <select
             value={modelFilter}
-            onChange={(e) =>
-              setModelFilter(e.target.value)
-            }
+            onChange={(e) => setModelFilter(e.target.value)}
             className="cursor-pointer bg-[#faf7f2] border border-[#c8beb1] rounded-2xl px-4 py-4 text-[#26211d]"
           >
-            <option value="all">
-              All Models
-            </option>
-
+            <option value="all">All Models</option>
             {models.map((pedal) => (
-              <option
-                key={pedal.pedal_id}
-                value={pedal.pedal_id}
-              >
-                {pedal.name}
-              </option>
+              <option key={pedal.pedal_id} value={pedal.pedal_id}>{pedal.name}</option>
             ))}
           </select>
         </div>
@@ -354,38 +201,20 @@ export default function DiscoverPage() {
             }}
             className="cursor-pointer bg-[#faf7f2] border border-[#c8beb1] rounded-2xl px-4 py-4 text-[#26211d]"
           >
-            <option value="all">
-              All Types
-            </option>
-
+            <option value="all">All Types</option>
             {types.map((type) => (
-              <option
-                key={type.type_id}
-                value={type.type_id}
-              >
-                {type.type}
-              </option>
+              <option key={type.type_id} value={type.type_id}>{type.type}</option>
             ))}
           </select>
 
           <select
             value={subtypeFilter}
-            onChange={(e) =>
-              setSubtypeFilter(e.target.value)
-            }
+            onChange={(e) => setSubtypeFilter(e.target.value)}
             className="cursor-pointer bg-[#faf7f2] border border-[#c8beb1] rounded-2xl px-4 py-4 text-[#26211d]"
           >
-            <option value="all">
-              All Subtypes
-            </option>
-
+            <option value="all">All Subtypes</option>
             {subtypes.map((subtype) => (
-              <option
-                key={subtype.subtype_id}
-                value={subtype.subtype_id}
-              >
-                {subtype.subtype}
-              </option>
+              <option key={subtype.subtype_id} value={subtype.subtype_id}>{subtype.subtype}</option>
             ))}
           </select>
         </div>
@@ -394,95 +223,31 @@ export default function DiscoverPage() {
         <div className="grid grid-cols-2 gap-4">
           {pedals.map((pedal) => {
             const imageUrl = `https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/pedal_images/${pedal.image_path}`
-
             return (
-              <Link
-                href={`/pedal/${pedal.pedal_id}`}
-                key={pedal.pedal_id}
-              >
+              <Link href={`/pedal/${pedal.pedal_id}`} key={pedal.pedal_id}>
                 <div className="bg-[#faf7f2] rounded-[2rem] p-4 border border-[#ebe6df]">
                   <div className="bg-[#f3efe8] rounded-[1.5rem] h-44 flex items-center justify-center mb-4">
-                    <img
-                      src={imageUrl}
-                      alt={pedal.name}
-                      className="h-32 object-contain"
-                    />
+                    <img src={imageUrl} alt={pedal.name} className="h-32 object-contain" />
                   </div>
-
-                  <p className="text-[10px] uppercase tracking-[0.25em] text-[#5b544c] mb-2">
-                    {pedal.brand_name}
-                  </p>
-
-                  <h2 className="text-2xl font-serif font-medium text-[#26211d] leading-none mb-3">
-                    {pedal.name}
-                  </h2>
-
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-[#5b544c] mb-2">{pedal.brand_name}</p>
+                  <h2 className="text-2xl font-serif font-medium text-[#26211d] leading-none mb-3">{pedal.name}</h2>
                   <div className="mb-4 space-y-1">
-                    <p className="text-xs text-[#3a342e]">
-                      {pedal.type_name}
-                    </p>
-
-                    <p className="text-xs text-[#5b544c]">
-                      {pedal.subtype_name}
-                    </p>
+                    <p className="text-xs text-[#3a342e]">{pedal.type_name}</p>
+                    <p className="text-xs text-[#5b544c]">{pedal.subtype_name}</p>
                   </div>
-
-                  <div
-                    className="flex flex-wrap gap-2"
-                    onClick={(e) =>
-                      e.preventDefault()
-                    }
-                  >
+                  <div className="flex flex-wrap gap-2" onClick={(e) => e.preventDefault()}>
                     <button
-                      onClick={() =>
-                        setStatus(
-                          pedal.pedal_id,
-                          'have'
-                        )
-                      }
-                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
-                        pedal.status ===
-                        'have'
-                          ? 'bg-[#26211d] text-[#f8f5ef]'
-                          : 'bg-[#faf7f2] border border-[#c8beb1]'
-                      }`}
-                    >
-                      Have
-                    </button>
-
+                      onClick={() => setStatus(pedal.pedal_id, 'have')}
+                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${pedal.status === 'have' ? 'bg-[#26211d] text-[#f8f5ef]' : 'bg-[#faf7f2] border border-[#c8beb1]'}`}
+                    >Have</button>
                     <button
-                      onClick={() =>
-                        setStatus(
-                          pedal.pedal_id,
-                          'had'
-                        )
-                      }
-                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
-                        pedal.status ===
-                        'had'
-                          ? 'bg-[#26211d] text-[#f8f5ef]'
-                          : 'bg-[#faf7f2] border border-[#c8beb1]'
-                      }`}
-                    >
-                      Had
-                    </button>
-
+                      onClick={() => setStatus(pedal.pedal_id, 'had')}
+                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${pedal.status === 'had' ? 'bg-[#26211d] text-[#f8f5ef]' : 'bg-[#faf7f2] border border-[#c8beb1]'}`}
+                    >Had</button>
                     <button
-                      onClick={() =>
-                        setStatus(
-                          pedal.pedal_id,
-                          'want'
-                        )
-                      }
-                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
-                        pedal.status ===
-                        'want'
-                          ? 'bg-[#26211d] text-[#f8f5ef]'
-                          : 'bg-[#faf7f2] border border-[#c8beb1]'
-                      }`}
-                    >
-                      Want
-                    </button>
+                      onClick={() => setStatus(pedal.pedal_id, 'want')}
+                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${pedal.status === 'want' ? 'bg-[#26211d] text-[#f8f5ef]' : 'bg-[#faf7f2] border border-[#c8beb1]'}`}
+                    >Want</button>
                   </div>
                 </div>
               </Link>
@@ -493,22 +258,10 @@ export default function DiscoverPage() {
         {/* NAV */}
         <div className="fixed bottom-0 left-0 right-0 bg-[#f5f1ea]/95 backdrop-blur border-t border-[#e8e1d8]">
           <div className="max-w-md mx-auto flex justify-around py-4 text-sm">
-            <Link
-              href="/discover"
-              className="cursor-pointer text-[#26211d] font-medium"
-            >
-              Discover
-            </Link>
-
-            <Link
-              href="/collection"
-              className="cursor-pointer text-[#5b544c]"
-            >
-              Collection
-            </Link>
+            <Link href="/discover" className="cursor-pointer text-[#26211d] font-medium">Discover</Link>
+            <Link href="/collection" className="cursor-pointer text-[#5b544c]">Collection</Link>
           </div>
         </div>
-
         <div className="h-24" />
       </div>
     </main>
