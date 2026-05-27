@@ -160,14 +160,18 @@ export default async function PedalDetailPage({
           </p>
         </div>
 
-        {/* BACK */}
+        {/* BACK BUTTON */}
         <div className="mb-8">
-          <Link
-            href="/discover"
-            className="cursor-pointer text-sm text-[#6f675d]"
+          <button
+            onClick={(e) => {
+              if (typeof window !== 'undefined') {
+                window.history.back();
+              }
+            }}
+            className="cursor-pointer text-sm text-[#6f675d] bg-transparent border-none p-0 outline-none select-none text-left font-normal"
           >
             ← Back
-          </Link>
+          </button>
         </div>
 
         {/* IMAGE */}
