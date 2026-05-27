@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/utils/supabase/client';
+import { supabase } from '@/lib/supabase';
 import PedalCard from '@/components/PedalCard';
 
 export default function CollectionPage() {
   const router = useRouter();
-  const supabase = createClient();
 
   // -----------------------------
   // DATA
@@ -20,7 +19,7 @@ export default function CollectionPage() {
       setPedals(data || []);
     }
     load();
-  }, [supabase]);
+  }, []);
 
   // -----------------------------
   // OPEN PEDAL (guardar scroll)
