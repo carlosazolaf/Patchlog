@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 
 export default function CollectionPage() {
@@ -11,9 +11,7 @@ export default function CollectionPage() {
   const [types, setTypes] = useState<any[]>([])
   const [subtypes, setSubtypes] = useState<any[]>([])
 
-  /*
-    FILTERS (Inicializados de forma segura para evitar errores de servidor)
-  */
+  /* Filtros */
   const [statusFilter, setStatusFilter] = useState('all')
   const [brandFilter, setBrandFilter] = useState('all')
   const [modelFilter, setModelFilter] = useState('all')
@@ -21,12 +19,9 @@ export default function CollectionPage() {
   const [subtypeFilter, setSubtypeFilter] = useState('all')
 
   const [isLoaded, setIsLoaded] = useState(false)
-
   const [counts, setCounts] = useState({ all: 0, have: 0, had: 0, want: 0 })
 
-  /*
-    1. CARGAR FILTROS DESDE SESSION STORAGE (Solo en el Cliente)
-  */
+  /* 1. Cargar filtros desde sessionStorage (Solo Cliente) */
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedStatus = sessionStorage.getItem('collection_statusFilter')
@@ -45,50 +40,8 @@ export default function CollectionPage() {
     }
   }, [])
 
-  /*
-    2. CARGAR FILTRADO DE LA COLECCIÓN
-  */
-  useEffect(() => {
-    if (isLoaded) {
-      fetchCollection()
-    }
-  }, [statusFilter, brandFilter, modelFilter, typeFilter, subtypeFilter, isLoaded])
-
-  /*
-    3. GUARDAR FILTROS EN SESSION STORAGE AL CAMBIAR
-  */
-  useEffect(() => {
-    if (isLoaded) {
-      sessionStorage.setItem('collection_statusFilter', statusFilter)
-      sessionStorage.setItem('collection_brandFilter', brandFilter)
-      sessionStorage.setItem('collection_modelFilter', modelFilter)
-      sessionStorage.setItem('collection_typeFilter', typeFilter)
-      sessionStorage.setItem('collection_subtypeFilter', subtypeFilter)
-    }
-  }, [statusFilter, brandFilter, modelFilter, typeFilter, subtypeFilter, isLoaded])
-
-  // Capturar scroll en colección
-  useEffect(() => {
-    const handleScroll = () => {
-      sessionStorage.setItem('collection_scroll_pos', window.scrollY.toString())
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
-
-  // Restaurar posición de scroll al re-renderizar
-  useEffect(() => {
-    if (pedals.length > 0 && isLoaded) {
-      const savedScroll = sessionStorage.getItem('collection_scroll_pos')
-      if (savedScroll) {
-        setTimeout(() => {
-          window.scrollTo(0, parseInt(savedScroll, 10))
-        }, 60)
-      }
-    }
-  }, [pedals, isLoaded])
-
-  async function fetchCollection() {
+  /* 2. Función de carga de colección memorizada */
+  const fetchCollection = useCallback(async (currStatus: string, currBrand: string, currModel: string, currType: string, currSubtype: string) => {
     let userQuery = supabase.from('user_pedals').select('*')
     const { data: allStatuses } = await supabase.from('user_pedals').select('*')
 
@@ -99,8 +52,8 @@ export default function CollectionPage() {
       want: allStatuses?.filter((p) => p.status === 'want').length || 0
     })
 
-    if (statusFilter !== 'all') {
-      userQuery = userQuery.eq('status', statusFilter)
+    if (currStatus !== 'all') {
+      userQuery = userQuery.eq('status', currStatus)
     }
 
     const { data: userPedalsData } = await userQuery
@@ -118,10 +71,10 @@ export default function CollectionPage() {
       .in('pedal_id', pedalIds)
       .order('name', { ascending: true })
 
-    if (brandFilter !== 'all') pedalsQuery = pedalsQuery.eq('brand_id', brandFilter)
-    if (modelFilter !== 'all') pedalsQuery = pedalsQuery.eq('pedal_id', modelFilter)
-    if (typeFilter !== 'all') pedalsQuery = pedalsQuery.eq('type_id', typeFilter)
-    if (subtypeFilter !== 'all') pedalsQuery = pedalsQuery.eq('subtype_id', subtypeFilter)
+    if (currBrand !== 'all') pedalsQuery = pedalsQuery.eq('brand_id', currBrand)
+    if (currModel !== 'all') pedalsQuery = pedalsQuery.eq('pedal_id', currModel)
+    if (currType !== 'all') pedalsQuery = pedalsQuery.eq('type_id', currType)
+    if (currSubtype !== 'all') pedalsQuery = pedalsQuery.eq('subtype_id', currSubtype)
 
     const { data: pedalsData } = await pedalsQuery
     const { data: brandsData } = await supabase.from('brand').select('*')
@@ -144,29 +97,65 @@ export default function CollectionPage() {
     })
 
     setPedals(enriched)
+    setBrands(brandsData || [])
+    setTypes(typesData || [])
+    setSubtypes(subtypesData || [])
+  }, [])
 
-    const collectionBrands = [...new Map(enriched.map((p) => [p.brand_id, { brand_id: p.brand_id, brand: p.brand_name }])).values()]
-    const collectionTypes = [...new Map(enriched.map((p) => [p.type_id, { type_id: p.type_id, type: p.type_name }])).values()]
-    const collectionSubtypes = [...new Map(enriched.map((p) => [p.subtype_id, { subtype_id: p.subtype_id, subtype: p.subtype_name }])).values()]
+  /* 3. Ejecución controlada de filtros */
+  useEffect(() => {
+    if (isLoaded) {
+      fetchCollection(statusFilter, brandFilter, modelFilter, typeFilter, subtypeFilter)
+      sessionStorage.setItem('collection_statusFilter', statusFilter)
+      sessionStorage.setItem('collection_brandFilter', brandFilter)
+      sessionStorage.setItem('collection_modelFilter', modelFilter)
+      sessionStorage.setItem('collection_typeFilter', typeFilter)
+      sessionStorage.setItem('collection_subtypeFilter', subtypeFilter)
+    }
+  }, [statusFilter, brandFilter, modelFilter, typeFilter, subtypeFilter, isLoaded, fetchCollection])
 
-    setBrands(collectionBrands)
-    setTypes(collectionTypes)
-    setSubtypes(collectionSubtypes)
-  }
+  /* 4. Scroll Tracking */
+  useEffect(() => {
+    const handleScroll = () => {
+      sessionStorage.setItem('collection_scroll_pos', window.scrollY.toString())
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  /* 5. Restaurar Scroll */
+  useEffect(() => {
+    if (pedals.length > 0 && isLoaded) {
+      const savedScroll = sessionStorage.getItem('collection_scroll_pos')
+      if (savedScroll) {
+        setTimeout(() => {
+          window.scrollTo(0, parseInt(savedScroll, 10))
+        }, 50)
+      }
+    }
+  }, [pedals, isLoaded])
 
   async function removePedal(pedalId: number) {
     await supabase.from('user_pedals').delete().eq('pedal_id', pedalId)
-    fetchCollection()
+    fetchCollection(statusFilter, brandFilter, modelFilter, typeFilter, subtypeFilter)
   }
 
   async function moveStatus(pedalId: number, status: string) {
     await supabase.from('user_pedals').update({ status }).eq('pedal_id', pedalId)
-    fetchCollection()
+    fetchCollection(statusFilter, brandFilter, modelFilter, typeFilter, subtypeFilter)
   }
 
   const models = useMemo(() => {
     return [...pedals].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
   }, [pedals])
+
+  if (!isLoaded) {
+    return (
+      <main className="min-h-screen bg-[#f5f1ea] flex items-center justify-center">
+        <p className="text-[#5b544c] font-serif">Loading collection...</p>
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-screen bg-[#f5f1ea] flex justify-center overflow-x-hidden">
