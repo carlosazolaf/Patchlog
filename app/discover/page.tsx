@@ -29,22 +29,6 @@ export default function DiscoverPage() {
 
   const [subtypeFilter, setSubtypeFilter] =
     useState('all')
-import { useDiscoverState } from '@/hooks/useDiscoverState';
-
-useDiscoverState(
-  {
-    brandFilter,
-    modelFilter,
-    typeFilter,
-    subtypeFilter,
-  },
-  (restored) => {
-    setBrandFilter(restored.brandFilter || 'all');
-    setModelFilter(restored.modelFilter || 'all');
-    setTypeFilter(restored.typeFilter || 'all');
-    setSubtypeFilter(restored.subtypeFilter || 'all');
-  }
-);
 
   /*
     LOAD
