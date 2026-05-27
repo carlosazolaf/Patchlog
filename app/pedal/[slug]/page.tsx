@@ -160,10 +160,11 @@ export default async function PedalDetailPage({
           </p>
         </div>
 
-        {/* BACK */}
+        {/* BACK (Usa el historial de navegación para disparar la restauración de scroll en el origen) */}
         <div className="mb-8">
           <Link
             href="/discover"
+            onClick="typeof window !== 'undefined' ? (window.history.back(), event.preventDefault()) : null"
             className="cursor-pointer text-sm text-[#6f675d]"
           >
             ← Back
