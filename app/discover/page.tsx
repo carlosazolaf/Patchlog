@@ -190,25 +190,29 @@ export default function DiscoverPage() {
   }
 
   /*
-    STATUS
+    STATUS (Con opción de des-seleccionar)
   */
-
-  async function setStatus(
-    pedalId: number,
-    status: string
-  ) {
+  async function setStatus(pedalId: number, status: string) {
     const existing = userPedals.find(
-      (p) =>
-        Number(p.pedal_id) ===
-        Number(pedalId)
+      (p) => Number(p.pedal_id) === Number(pedalId)
     )
 
     if (existing) {
-      await supabase
-        .from('user_pedals')
-        .update({ status })
-        .eq('pedal_id', pedalId)
+      if (existing.status === status) {
+        // Si vuelve a presionar el botón activo, lo borramos de la base de datos
+        await supabase
+          .from('user_pedals')
+          .delete()
+          .eq('pedal_id', pedalId)
+      } else {
+        // Si presiona un botón diferente, actualizamos el estado
+        await supabase
+          .from('user_pedals')
+          .update({ status })
+          .eq('pedal_id', pedalId)
+      }
     } else {
+      // Si no existía, lo insertamos normalmente
       await supabase
         .from('user_pedals')
         .insert({
@@ -217,9 +221,9 @@ export default function DiscoverPage() {
         })
     }
 
-    fetchData()
+    // Refrescamos los datos manteniendo los filtros actuales en pantalla
+    fetchData(brandFilter, modelFilter, typeFilter, subtypeFilter)
   }
-
   /*
     MODELS
   */
