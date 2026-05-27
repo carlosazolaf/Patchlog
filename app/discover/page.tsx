@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import LoadingTabs from '@/components/LoadingTabs'
 
 export default function DiscoverPage() {
   const [pedals, setPedals] = useState<any[]>([])
@@ -124,12 +125,9 @@ export default function DiscoverPage() {
     return [...pedals].sort((a, b) => (a.name || '').localeCompare(b.name || ''))
   }, [pedals])
 
+  /* Uso de tu componente personalizado LoadingTabs */
   if (!isLoaded) {
-    return (
-      <main className="min-h-screen bg-[#f5f1ea] flex items-center justify-center">
-        <p className="text-[#5b544c] font-serif">Loading patchlog...</p>
-      </main>
-    )
+    return <LoadingTabs text="Loading discover..." />
   }
 
   return (
