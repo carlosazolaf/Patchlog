@@ -215,7 +215,7 @@ export default function DiscoverPage() {
           <img
             src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
             alt="Patchlog"
-            className="w-[92%] mx-auto object-contain mb-3 pt-2 h-10"
+            className="w-[92%] mx-auto object-contain mb-5 pt-4"
           />
           <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none mb-2">
             Discover
@@ -223,11 +223,11 @@ export default function DiscoverPage() {
           <p className="text-[#3a342e] text-base mb-4">
             Explore the world of pedals.
           </p>
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex flex-wrap gap-2">
             {(['all', 'have', 'had', 'want'] as const).map((s) => (
               <div
                 key={s}
-                className="shrink-0 px-4 py-3 rounded-full text-sm font-medium capitalize bg-[#faf7f2] border border-[#c8beb1] text-[#26211d]"
+                className="px-4 py-3 rounded-full text-sm font-medium capitalize bg-[#faf7f2] border border-[#c8beb1] text-[#26211d]"
               >
                 {s} ({counts[s]})
               </div>
