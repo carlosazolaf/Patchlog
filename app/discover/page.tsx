@@ -20,36 +20,51 @@ export default function DiscoverPage() {
   /*
     FILTERS
   */
-  const [brandFilter, setBrandFilter] = useState('all')
-  const [modelFilter, setModelFilter] = useState('all')
-  const [typeFilter, setTypeFilter] = useState('all')
-  const [subtypeFilter, setSubtypeFilter] = useState('all')
+  const [brandFilter, setBrandFilter] = useState(() => {
+  if (typeof window === 'undefined') return 'all'
+  try {
+    const f = sessionStorage.getItem('discover_filters')
+    return f ? (JSON.parse(f).brand ?? 'all') : 'all'
+  } catch { return 'all' }
+})
+const [modelFilter, setModelFilter] = useState(() => {
+  if (typeof window === 'undefined') return 'all'
+  try {
+    const f = sessionStorage.getItem('discover_filters')
+    return f ? (JSON.parse(f).model ?? 'all') : 'all'
+  } catch { return 'all' }
+})
+const [typeFilter, setTypeFilter] = useState(() => {
+  if (typeof window === 'undefined') return 'all'
+  try {
+    const f = sessionStorage.getItem('discover_filters')
+    return f ? (JSON.parse(f).type ?? 'all') : 'all'
+  } catch { return 'all' }
+})
+const [subtypeFilter, setSubtypeFilter] = useState(() => {
+  if (typeof window === 'undefined') return 'all'
+  try {
+    const f = sessionStorage.getItem('discover_filters')
+    return f ? (JSON.parse(f).subtype ?? 'all') : 'all'
+  } catch { return 'all' }
+})
 
   /*
     RESTORE SCROLL & FILTERS
   */
   useEffect(() => {
-    if (restoredRef.current) return
-    restoredRef.current = true
+  if (restoredRef.current) return
+  restoredRef.current = true
 
-    const savedFilters = sessionStorage.getItem('discover_filters')
-    if (savedFilters) {
-      try {
-        const f = JSON.parse(savedFilters)
-        setBrandFilter(f.brand ?? 'all')
-        setModelFilter(f.model ?? 'all')
-        setTypeFilter(f.type ?? 'all')
-        setSubtypeFilter(f.subtype ?? 'all')
-      } catch {}
-      sessionStorage.removeItem('discover_filters')
-    }
+  // Limpiar filtros guardados (ya fueron leídos en useState)
+  sessionStorage.removeItem('discover_filters')
 
-    const savedScroll = sessionStorage.getItem('discover_scrollY')
-    if (savedScroll) {
-      sessionStorage.removeItem('discover_scrollY')
-      setPendingScroll(parseInt(savedScroll))
-    }
-  }, [])
+  const savedScroll = sessionStorage.getItem('discover_scrollY')
+  if (savedScroll) {
+    sessionStorage.removeItem('discover_scrollY')
+    setPendingScroll(parseInt(savedScroll))
+  }
+}, [])
 
   /*
     EXECUTE SCROLL AFTER PEDALS RENDER
