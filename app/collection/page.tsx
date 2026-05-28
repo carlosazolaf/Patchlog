@@ -13,35 +13,56 @@ export default function CollectionPage() {
   const [brands, setBrands] = useState<any[]>([])
   const [types, setTypes] = useState<any[]>([])
   const [subtypes, setSubtypes] = useState<any[]>([])
+  const [counts, setCounts] = useState({ all: 0, have: 0, had: 0, want: 0 })
   const [pendingScroll, setPendingScroll] = useState<number | null>(null)
 
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [brandFilter, setBrandFilter] = useState('all')
-  const [modelFilter, setModelFilter] = useState('all')
-  const [typeFilter, setTypeFilter] = useState('all')
-  const [subtypeFilter, setSubtypeFilter] = useState('all')
-
-  const [counts, setCounts] = useState({ all: 0, have: 0, had: 0, want: 0 })
+  /*
+    FILTERS — inicializados desde sessionStorage síncronamente
+  */
+  const [statusFilter, setStatusFilter] = useState(() => {
+    if (typeof window === 'undefined') return 'all'
+    try {
+      const f = sessionStorage.getItem('collection_filters')
+      return f ? (JSON.parse(f).status ?? 'all') : 'all'
+    } catch { return 'all' }
+  })
+  const [brandFilter, setBrandFilter] = useState(() => {
+    if (typeof window === 'undefined') return 'all'
+    try {
+      const f = sessionStorage.getItem('collection_filters')
+      return f ? (JSON.parse(f).brand ?? 'all') : 'all'
+    } catch { return 'all' }
+  })
+  const [modelFilter, setModelFilter] = useState(() => {
+    if (typeof window === 'undefined') return 'all'
+    try {
+      const f = sessionStorage.getItem('collection_filters')
+      return f ? (JSON.parse(f).model ?? 'all') : 'all'
+    } catch { return 'all' }
+  })
+  const [typeFilter, setTypeFilter] = useState(() => {
+    if (typeof window === 'undefined') return 'all'
+    try {
+      const f = sessionStorage.getItem('collection_filters')
+      return f ? (JSON.parse(f).type ?? 'all') : 'all'
+    } catch { return 'all' }
+  })
+  const [subtypeFilter, setSubtypeFilter] = useState(() => {
+    if (typeof window === 'undefined') return 'all'
+    try {
+      const f = sessionStorage.getItem('collection_filters')
+      return f ? (JSON.parse(f).subtype ?? 'all') : 'all'
+    } catch { return 'all' }
+  })
 
   /*
-    RESTORE SCROLL & FILTERS
+    RESTORE — solo limpia storage y maneja scroll
   */
   useEffect(() => {
     if (restoredRef.current) return
     restoredRef.current = true
 
-    const savedFilters = sessionStorage.getItem('collection_filters')
-    if (savedFilters) {
-      try {
-        const f = JSON.parse(savedFilters)
-        setStatusFilter(f.status ?? 'all')
-        setBrandFilter(f.brand ?? 'all')
-        setModelFilter(f.model ?? 'all')
-        setTypeFilter(f.type ?? 'all')
-        setSubtypeFilter(f.subtype ?? 'all')
-      } catch {}
-      sessionStorage.removeItem('collection_filters')
-    }
+    sessionStorage.removeItem('collection_filters')
 
     const savedScroll = sessionStorage.getItem('collection_scrollY')
     if (savedScroll) {
@@ -76,7 +97,7 @@ export default function CollectionPage() {
     const { data: allStatuses } = await supabase.from('user_pedals').select('*')
 
     setCounts({
-      all: allStatuses?.length || 0,
+      all:  allStatuses?.length || 0,
       have: allStatuses?.filter((p) => p.status === 'have').length || 0,
       had:  allStatuses?.filter((p) => p.status === 'had').length  || 0,
       want: allStatuses?.filter((p) => p.status === 'want').length || 0,
@@ -190,7 +211,7 @@ export default function CollectionPage() {
           <img
             src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
             alt="Patchlog"
-            className="w-[92%] mx-auto object-contain mb-5"
+            className="w-[92%] mx-auto object-contain mb-3 h-10"
           />
           <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none mb-2">
             Collection
@@ -201,18 +222,18 @@ export default function CollectionPage() {
         </div>
 
         {/* STATUS */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {['all', 'have', 'had', 'want'].map((status) => (
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none mb-6">
+          {(['all', 'have', 'had', 'want'] as const).map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`cursor-pointer px-4 py-3 rounded-full text-sm font-medium capitalize transition ${
+              className={`shrink-0 cursor-pointer px-4 py-3 rounded-full text-sm font-medium capitalize transition ${
                 statusFilter === status
                   ? 'bg-[#26211d] text-[#f8f5ef]'
                   : 'bg-[#faf7f2] border border-[#c8beb1]'
               }`}
             >
-              {status} ({counts[status as keyof typeof counts]})
+              {status} ({counts[status]})
             </button>
           ))}
         </div>
@@ -326,3 +347,66 @@ export default function CollectionPage() {
                   </div>
 
                   <div
+                    className="flex flex-wrap gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      onClick={() => moveStatus(pedal.pedal_id, 'have')}
+                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
+                        pedal.status === 'have'
+                          ? 'bg-[#26211d] text-[#f8f5ef]'
+                          : 'bg-[#faf7f2] border border-[#c8beb1]'
+                      }`}
+                    >
+                      Have
+                    </button>
+                    <button
+                      onClick={() => moveStatus(pedal.pedal_id, 'had')}
+                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
+                        pedal.status === 'had'
+                          ? 'bg-[#26211d] text-[#f8f5ef]'
+                          : 'bg-[#faf7f2] border border-[#c8beb1]'
+                      }`}
+                    >
+                      Had
+                    </button>
+                    <button
+                      onClick={() => moveStatus(pedal.pedal_id, 'want')}
+                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
+                        pedal.status === 'want'
+                          ? 'bg-[#26211d] text-[#f8f5ef]'
+                          : 'bg-[#faf7f2] border border-[#c8beb1]'
+                      }`}
+                    >
+                      Want
+                    </button>
+                    <button
+                      onClick={() => removePedal(pedal.pedal_id)}
+                      className="cursor-pointer text-sm font-medium px-3 py-2 rounded-full bg-red-100 text-red-700"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* NAV */}
+        <div className="fixed bottom-0 left-0 right-0 bg-[#f5f1ea]/95 backdrop-blur border-t border-[#e8e1d8]">
+          <div className="max-w-md mx-auto flex justify-around py-4 text-sm">
+            <Link href="/discover" className="cursor-pointer text-[#5b544c]">
+              Discover
+            </Link>
+            <Link href="/collection" className="cursor-pointer text-[#26211d] font-medium">
+              Collection
+            </Link>
+          </div>
+        </div>
+
+        <div className="h-24" />
+      </div>
+    </main>
+  )
+}
