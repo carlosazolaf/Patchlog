@@ -18,53 +18,52 @@ export default function DiscoverPage() {
   const [pendingScroll, setPendingScroll] = useState<number | null>(null)
 
   /*
-    FILTERS
+    FILTERS — inicializados desde sessionStorage síncronamente
   */
   const [brandFilter, setBrandFilter] = useState(() => {
-  if (typeof window === 'undefined') return 'all'
-  try {
-    const f = sessionStorage.getItem('discover_filters')
-    return f ? (JSON.parse(f).brand ?? 'all') : 'all'
-  } catch { return 'all' }
-})
-const [modelFilter, setModelFilter] = useState(() => {
-  if (typeof window === 'undefined') return 'all'
-  try {
-    const f = sessionStorage.getItem('discover_filters')
-    return f ? (JSON.parse(f).model ?? 'all') : 'all'
-  } catch { return 'all' }
-})
-const [typeFilter, setTypeFilter] = useState(() => {
-  if (typeof window === 'undefined') return 'all'
-  try {
-    const f = sessionStorage.getItem('discover_filters')
-    return f ? (JSON.parse(f).type ?? 'all') : 'all'
-  } catch { return 'all' }
-})
-const [subtypeFilter, setSubtypeFilter] = useState(() => {
-  if (typeof window === 'undefined') return 'all'
-  try {
-    const f = sessionStorage.getItem('discover_filters')
-    return f ? (JSON.parse(f).subtype ?? 'all') : 'all'
-  } catch { return 'all' }
-})
+    if (typeof window === 'undefined') return 'all'
+    try {
+      const f = sessionStorage.getItem('discover_filters')
+      return f ? (JSON.parse(f).brand ?? 'all') : 'all'
+    } catch { return 'all' }
+  })
+  const [modelFilter, setModelFilter] = useState(() => {
+    if (typeof window === 'undefined') return 'all'
+    try {
+      const f = sessionStorage.getItem('discover_filters')
+      return f ? (JSON.parse(f).model ?? 'all') : 'all'
+    } catch { return 'all' }
+  })
+  const [typeFilter, setTypeFilter] = useState(() => {
+    if (typeof window === 'undefined') return 'all'
+    try {
+      const f = sessionStorage.getItem('discover_filters')
+      return f ? (JSON.parse(f).type ?? 'all') : 'all'
+    } catch { return 'all' }
+  })
+  const [subtypeFilter, setSubtypeFilter] = useState(() => {
+    if (typeof window === 'undefined') return 'all'
+    try {
+      const f = sessionStorage.getItem('discover_filters')
+      return f ? (JSON.parse(f).subtype ?? 'all') : 'all'
+    } catch { return 'all' }
+  })
 
   /*
-    RESTORE SCROLL & FILTERS
+    RESTORE — solo limpia storage y maneja scroll
   */
   useEffect(() => {
-  if (restoredRef.current) return
-  restoredRef.current = true
+    if (restoredRef.current) return
+    restoredRef.current = true
 
-  // Limpiar filtros guardados (ya fueron leídos en useState)
-  sessionStorage.removeItem('discover_filters')
+    sessionStorage.removeItem('discover_filters')
 
-  const savedScroll = sessionStorage.getItem('discover_scrollY')
-  if (savedScroll) {
-    sessionStorage.removeItem('discover_scrollY')
-    setPendingScroll(parseInt(savedScroll))
-  }
-}, [])
+    const savedScroll = sessionStorage.getItem('discover_scrollY')
+    if (savedScroll) {
+      sessionStorage.removeItem('discover_scrollY')
+      setPendingScroll(parseInt(savedScroll))
+    }
+  }, [])
 
   /*
     EXECUTE SCROLL AFTER PEDALS RENDER
@@ -154,7 +153,7 @@ const [subtypeFilter, setSubtypeFilter] = useState(() => {
     setUserPedals(userPedalsData || [])
 
     setCounts({
-      all: userPedalsData?.length || 0,
+      all:  userPedalsData?.length || 0,
       have: userPedalsData?.filter((p) => p.status === 'have').length || 0,
       had:  userPedalsData?.filter((p) => p.status === 'had').length  || 0,
       want: userPedalsData?.filter((p) => p.status === 'want').length || 0,
@@ -178,7 +177,7 @@ const [subtypeFilter, setSubtypeFilter] = useState(() => {
   }
 
   /*
-    STATUS (Con opción de des-seleccionar)
+    STATUS
   */
   async function setStatus(pedalId: number, status: string) {
     const existing = userPedals.find(
@@ -187,20 +186,12 @@ const [subtypeFilter, setSubtypeFilter] = useState(() => {
 
     if (existing) {
       if (existing.status === status) {
-        await supabase
-          .from('user_pedals')
-          .delete()
-          .eq('pedal_id', pedalId)
+        await supabase.from('user_pedals').delete().eq('pedal_id', pedalId)
       } else {
-        await supabase
-          .from('user_pedals')
-          .update({ status })
-          .eq('pedal_id', pedalId)
+        await supabase.from('user_pedals').update({ status }).eq('pedal_id', pedalId)
       }
     } else {
-      await supabase
-        .from('user_pedals')
-        .insert({ pedal_id: pedalId, status })
+      await supabase.from('user_pedals').insert({ pedal_id: pedalId, status })
     }
 
     fetchData()
@@ -224,7 +215,7 @@ const [subtypeFilter, setSubtypeFilter] = useState(() => {
           <img
             src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
             alt="Patchlog"
-            className="w-[92%] mx-auto object-contain mb-5 pt-4"
+            className="w-[92%] mx-auto object-contain mb-3 pt-2 h-10"
           />
           <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none mb-2">
             Discover
@@ -232,11 +223,11 @@ const [subtypeFilter, setSubtypeFilter] = useState(() => {
           <p className="text-[#3a342e] text-base mb-4">
             Explore the world of pedals.
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
             {(['all', 'have', 'had', 'want'] as const).map((s) => (
               <div
                 key={s}
-                className="px-4 py-3 rounded-full text-sm font-medium capitalize bg-[#faf7f2] border border-[#c8beb1] text-[#26211d]"
+                className="shrink-0 px-4 py-3 rounded-full text-sm font-medium capitalize bg-[#faf7f2] border border-[#c8beb1] text-[#26211d]"
               >
                 {s} ({counts[s]})
               </div>
