@@ -1,210 +1,237 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface Pedal {
+  pedal_id: number
+  name: string
+  brand_id: number
+  type_id: number
+  subtype_id: number
+  image_path: string
+  brand_name: string
+  type_name: string
+  subtype_name: string
+  status: string
+}
+
+interface Brand  { brand_id: number; brand: string }
+interface Type   { type_id: number; type: string }
+interface Subtype { subtype_id: number; subtype: string }
+
+type StatusKey = 'all' | 'have' | 'had' | 'want'
+
+// ─── Skeleton card ─────────────────────────────────────────────────────────────
+
+function SkeletonCard() {
+  return (
+    <div className="bg-[#faf7f2] rounded-[2rem] p-4 border border-[#ebe6df] animate-pulse">
+      <div className="bg-[#ede9e2] rounded-[1.5rem] h-44 mb-4" />
+      <div className="h-2 bg-[#ede9e2] rounded w-1/2 mb-3" />
+      <div className="h-5 bg-[#ede9e2] rounded w-3/4 mb-3" />
+      <div className="h-2 bg-[#ede9e2] rounded w-1/3 mb-1" />
+      <div className="h-2 bg-[#ede9e2] rounded w-1/4 mb-4" />
+      <div className="flex gap-2">
+        <div className="h-8 w-14 bg-[#ede9e2] rounded-full" />
+        <div className="h-8 w-12 bg-[#ede9e2] rounded-full" />
+        <div className="h-8 w-14 bg-[#ede9e2] rounded-full" />
+      </div>
+    </div>
+  )
+}
+
+// ─── Toast ─────────────────────────────────────────────────────────────────────
+
+function Toast({ message, visible }: { message: string; visible: boolean }) {
+  return (
+    <div
+      className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-full bg-[#26211d] text-[#f8f5ef] text-sm font-medium shadow-lg transition-all duration-300 ${
+        visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'
+      }`}
+    >
+      {message}
+    </div>
+  )
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+function readFilters() {
+  if (typeof window === 'undefined') return {}
+  try {
+    const f = sessionStorage.getItem('discover_filters')
+    return f ? JSON.parse(f) : {}
+  } catch { return {} }
+}
+
+// ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function DiscoverPage() {
   const router = useRouter()
   const restoredRef = useRef(false)
 
-  const [pedals, setPedals] = useState<any[]>([])
+  const [pedals, setPedals]         = useState<Pedal[]>([])
   const [userPedals, setUserPedals] = useState<any[]>([])
-  const [brands, setBrands] = useState<any[]>([])
-  const [types, setTypes] = useState<any[]>([])
-  const [subtypes, setSubtypes] = useState<any[]>([])
-  const [counts, setCounts] = useState({ all: 0, have: 0, had: 0, want: 0 })
+  const [brands, setBrands]         = useState<Brand[]>([])
+  const [types, setTypes]           = useState<Type[]>([])
+  const [subtypes, setSubtypes]     = useState<Subtype[]>([])
+  const [loading, setLoading]       = useState(true)
+  const [counts, setCounts]         = useState<Record<StatusKey, number>>({ all: 0, have: 0, had: 0, want: 0 })
   const [pendingScroll, setPendingScroll] = useState<number | null>(null)
 
-  /*
-    FILTERS — inicializados desde sessionStorage síncronamente
-  */
-  const [brandFilter, setBrandFilter] = useState(() => {
-    if (typeof window === 'undefined') return 'all'
-    try {
-      const f = sessionStorage.getItem('discover_filters')
-      return f ? (JSON.parse(f).brand ?? 'all') : 'all'
-    } catch { return 'all' }
-  })
-  const [modelFilter, setModelFilter] = useState(() => {
-    if (typeof window === 'undefined') return 'all'
-    try {
-      const f = sessionStorage.getItem('discover_filters')
-      return f ? (JSON.parse(f).model ?? 'all') : 'all'
-    } catch { return 'all' }
-  })
-  const [typeFilter, setTypeFilter] = useState(() => {
-    if (typeof window === 'undefined') return 'all'
-    try {
-      const f = sessionStorage.getItem('discover_filters')
-      return f ? (JSON.parse(f).type ?? 'all') : 'all'
-    } catch { return 'all' }
-  })
-  const [subtypeFilter, setSubtypeFilter] = useState(() => {
-    if (typeof window === 'undefined') return 'all'
-    try {
-      const f = sessionStorage.getItem('discover_filters')
-      return f ? (JSON.parse(f).subtype ?? 'all') : 'all'
-    } catch { return 'all' }
-  })
+  // Toast
+  const [toast, setToast]           = useState({ message: '', visible: false })
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  /*
-    RESTORE — solo limpia storage y maneja scroll
-  */
+  // Button loading state — tracks which pedal+status combo is saving
+  const [saving, setSaving]         = useState<string | null>(null)
+
+  // Filters — seeded from sessionStorage synchronously
+  const init = readFilters()
+  const [brandFilter,   setBrandFilter]   = useState<string>(init.brand   ?? 'all')
+  const [modelFilter,   setModelFilter]   = useState<string>(init.model   ?? 'all')
+  const [typeFilter,    setTypeFilter]    = useState<string>(init.type    ?? 'all')
+  const [subtypeFilter, setSubtypeFilter] = useState<string>(init.subtype ?? 'all')
+
+  // ── Restore scroll ─────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (restoredRef.current) return
     restoredRef.current = true
-
     sessionStorage.removeItem('discover_filters')
-
-    const savedScroll = sessionStorage.getItem('discover_scrollY')
-    if (savedScroll) {
+    const saved = sessionStorage.getItem('discover_scrollY')
+    if (saved) {
       sessionStorage.removeItem('discover_scrollY')
-      setPendingScroll(parseInt(savedScroll))
+      setPendingScroll(parseInt(saved))
     }
   }, [])
 
-  /*
-    EXECUTE SCROLL AFTER PEDALS RENDER
-  */
   useEffect(() => {
-    if (pendingScroll === null) return
-    if (pedals.length === 0) return
-    window.scrollTo({ top: pendingScroll, behavior: 'instant' })
-    setPendingScroll(null)
+    if (pendingScroll === null || pedals.length === 0) return
+    // Small timeout as a safety net if layout hasn't settled
+    const t = setTimeout(() => {
+      window.scrollTo({ top: pendingScroll, behavior: 'instant' })
+      setPendingScroll(null)
+    }, 80)
+    return () => clearTimeout(t)
   }, [pedals, pendingScroll])
 
-  /*
-    LOAD
-  */
-  useEffect(() => {
-    fetchData()
-  }, [brandFilter, modelFilter, typeFilter, subtypeFilter])
+  // ── Fetch ──────────────────────────────────────────────────────────────────
 
-  /*
-    FETCH
-  */
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+
+    // Run all independent queries in parallel
+    const [brandsRes, typesRes, subtypesRes, userPedalsRes] = await Promise.all([
+      supabase.from('brand').select('*').order('brand', { ascending: true }),
+      supabase.from('type').select('*').order('type', { ascending: true }),
+      supabase.from('subtype').select('*').order('subtype', { ascending: true }),
+      supabase.from('user_pedals').select('*'),
+    ])
+
     let pedalsQuery = supabase
       .from('pedals')
       .select('*')
       .order('name', { ascending: true })
       .limit(300)
 
-    if (brandFilter !== 'all') {
-      pedalsQuery = pedalsQuery.eq('brand_id', brandFilter)
-    }
-    if (modelFilter !== 'all') {
-      pedalsQuery = pedalsQuery.eq('pedal_id', modelFilter)
-    }
-    if (typeFilter !== 'all') {
-      pedalsQuery = pedalsQuery.eq('type_id', typeFilter)
-    }
-    if (subtypeFilter !== 'all') {
-      pedalsQuery = pedalsQuery.eq('subtype_id', subtypeFilter)
-    }
+    if (brandFilter   !== 'all') pedalsQuery = pedalsQuery.eq('brand_id',   brandFilter)
+    if (modelFilter   !== 'all') pedalsQuery = pedalsQuery.eq('pedal_id',   modelFilter)
+    if (typeFilter    !== 'all') pedalsQuery = pedalsQuery.eq('type_id',    typeFilter)
+    if (subtypeFilter !== 'all') pedalsQuery = pedalsQuery.eq('subtype_id', subtypeFilter)
 
     const { data: pedalsData } = await pedalsQuery
 
-    const { data: brandsData } = await supabase
-      .from('brand')
-      .select('*')
-      .order('brand', { ascending: true })
+    const brandsData    = brandsRes.data    || []
+    const typesData     = typesRes.data     || []
+    const subtypesData  = subtypesRes.data  || []
+    const userPedalsData = userPedalsRes.data || []
 
-    const { data: typesData } = await supabase
-      .from('type')
-      .select('*')
-      .order('type', { ascending: true })
-
-    const { data: subtypesData } = await supabase
-      .from('subtype')
-      .select('*')
-      .order('subtype', { ascending: true })
-
-    const { data: userPedalsData } = await supabase
-      .from('user_pedals')
-      .select('*')
-
-    const enriched = (pedalsData || []).map((pedal) => {
-      const brand = brandsData?.find(
-        (b) => Number(b.brand_id) === Number(pedal.brand_id)
-      )
-      const type = typesData?.find(
-        (t) => Number(t.type_id) === Number(pedal.type_id)
-      )
-      const subtype = subtypesData?.find(
-        (s) => Number(s.subtype_id) === Number(pedal.subtype_id)
-      )
-      const userPedal = userPedalsData?.find(
-        (u) => Number(u.pedal_id) === Number(pedal.pedal_id)
-      )
-
-      return {
-        ...pedal,
-        brand_name: brand?.brand || '',
-        type_name: type?.type || '',
-        subtype_name: subtype?.subtype || '',
-        status: userPedal?.status || ''
-      }
-    })
+    const enriched: Pedal[] = (pedalsData || []).map((pedal) => ({
+      ...pedal,
+      brand_name:   brandsData.find((b) => Number(b.brand_id)   === Number(pedal.brand_id))?.brand    || '',
+      type_name:    typesData.find((t)  => Number(t.type_id)    === Number(pedal.type_id))?.type      || '',
+      subtype_name: subtypesData.find((s) => Number(s.subtype_id) === Number(pedal.subtype_id))?.subtype || '',
+      status:       userPedalsData.find((u) => Number(u.pedal_id) === Number(pedal.pedal_id))?.status || '',
+    }))
 
     setPedals(enriched)
-    setUserPedals(userPedalsData || [])
-
+    setUserPedals(userPedalsData)
+    setBrands(brandsData)
+    setTypes([
+      ...new Map(enriched.map((p) => [p.type_id, { type_id: p.type_id, type: p.type_name }])).values(),
+    ])
+    setSubtypes([
+      ...new Map(enriched.map((p) => [p.subtype_id, { subtype_id: p.subtype_id, subtype: p.subtype_name }])).values(),
+    ])
     setCounts({
-      all:  userPedalsData?.length || 0,
-      have: userPedalsData?.filter((p) => p.status === 'have').length || 0,
-      had:  userPedalsData?.filter((p) => p.status === 'had').length  || 0,
-      want: userPedalsData?.filter((p) => p.status === 'want').length || 0,
+      all:  userPedalsData.length,
+      have: userPedalsData.filter((p) => p.status === 'have').length,
+      had:  userPedalsData.filter((p) => p.status === 'had').length,
+      want: userPedalsData.filter((p) => p.status === 'want').length,
     })
 
-    const filteredTypes = [
-      ...new Map(
-        enriched.map((p) => [p.type_id, { type_id: p.type_id, type: p.type_name }])
-      ).values()
-    ]
+    setLoading(false)
+  }, [brandFilter, modelFilter, typeFilter, subtypeFilter])
 
-    const filteredSubtypes = [
-      ...new Map(
-        enriched.map((p) => [p.subtype_id, { subtype_id: p.subtype_id, subtype: p.subtype_name }])
-      ).values()
-    ]
+  useEffect(() => { fetchData() }, [fetchData])
 
-    setBrands(brandsData || [])
-    setTypes(filteredTypes)
-    setSubtypes(filteredSubtypes)
+  // ── Toast helper ───────────────────────────────────────────────────────────
+
+  function showToast(msg: string) {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setToast({ message: msg, visible: true })
+    toastTimer.current = setTimeout(() => setToast((t) => ({ ...t, visible: false })), 2000)
   }
 
-  /*
-    STATUS
-  */
+  // ── Set status ─────────────────────────────────────────────────────────────
+
   async function setStatus(pedalId: number, status: string) {
-    const existing = userPedals.find(
-      (p) => Number(p.pedal_id) === Number(pedalId)
-    )
+    const key = `${pedalId}-${status}`
+    setSaving(key)
+
+    const existing = userPedals.find((p) => Number(p.pedal_id) === Number(pedalId))
 
     if (existing) {
       if (existing.status === status) {
         await supabase.from('user_pedals').delete().eq('pedal_id', pedalId)
+        showToast('Eliminado de tu colección')
       } else {
         await supabase.from('user_pedals').update({ status }).eq('pedal_id', pedalId)
+        showToast(`Movido a "${status}"`)
       }
     } else {
       await supabase.from('user_pedals').insert({ pedal_id: pedalId, status })
+      showToast(`Agregado a "${status}"`)
     }
 
+    setSaving(null)
     fetchData()
   }
 
-  /*
-    MODELS
-  */
-  const models = useMemo(() => {
-    return [...pedals].sort((a, b) =>
-      (a.name || '').localeCompare(b.name || '')
-    )
-  }, [pedals])
+  // ── Models dropdown (sorted by name) ──────────────────────────────────────
+
+  const models = useMemo(() =>
+    [...pedals].sort((a, b) => (a.name || '').localeCompare(b.name || '')),
+  [pedals])
+
+  // ── Navigate to detail ─────────────────────────────────────────────────────
+
+  function goToPedal(pedalId: number) {
+    sessionStorage.setItem('discover_scrollY', window.scrollY.toString())
+    sessionStorage.setItem('discover_filters', JSON.stringify({
+      brand: brandFilter, model: modelFilter, type: typeFilter, subtype: subtypeFilter,
+    }))
+    sessionStorage.setItem('pedal_back', 'discover')
+    router.push(`/pedal/${pedalId}`)
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <main className="min-h-screen bg-[#f5f1ea] flex justify-center overflow-x-hidden">
@@ -220,16 +247,18 @@ export default function DiscoverPage() {
           <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none mb-2">
             Discover
           </h1>
-          <p className="text-[#3a342e] text-base mb-4">
+          <p className="text-[#5b544c] text-base mb-4">
             Explore the world of pedals.
           </p>
+
+          {/* Status chips — informational only; styled differently from filter buttons */}
           <div className="flex flex-wrap gap-2">
-            {(['all', 'have', 'had', 'want'] as const).map((s) => (
+            {(['all', 'have', 'had', 'want'] as StatusKey[]).map((s) => (
               <div
                 key={s}
-                className="px-4 py-3 rounded-full text-sm font-medium capitalize bg-[#faf7f2] border border-[#c8beb1] text-[#26211d]"
+                className="px-3 py-2 rounded-full text-xs font-medium capitalize bg-[#f3efe8] border border-[#ddd7ce] text-[#5b544c]"
               >
-                {s} ({counts[s]})
+                {s} <span className="font-semibold text-[#26211d]">{counts[s]}</span>
               </div>
             ))}
           </div>
@@ -239,164 +268,146 @@ export default function DiscoverPage() {
         <div className="grid grid-cols-2 gap-3 mb-3">
           <select
             value={brandFilter}
-            onChange={(e) => {
-              setBrandFilter(e.target.value)
-              setModelFilter('all')
-              setTypeFilter('all')
-              setSubtypeFilter('all')
-            }}
-            className="cursor-pointer bg-[#faf7f2] border border-[#c8beb1] rounded-2xl px-4 py-4 text-[#26211d]"
+            onChange={(e) => { setBrandFilter(e.target.value); setModelFilter('all'); setTypeFilter('all'); setSubtypeFilter('all') }}
+            className="cursor-pointer bg-[#faf7f2] border border-[#c8beb1] rounded-2xl px-4 py-3.5 text-sm text-[#26211d] focus:outline-none focus:ring-2 focus:ring-[#26211d]/20"
           >
             <option value="all">All Brands</option>
-            {brands.map((brand) => (
-              <option key={brand.brand_id} value={brand.brand_id}>
-                {brand.brand}
-              </option>
-            ))}
+            {brands.map((b) => <option key={b.brand_id} value={b.brand_id}>{b.brand}</option>)}
           </select>
 
           <select
             value={modelFilter}
             onChange={(e) => setModelFilter(e.target.value)}
-            className="cursor-pointer bg-[#faf7f2] border border-[#c8beb1] rounded-2xl px-4 py-4 text-[#26211d]"
+            className="cursor-pointer bg-[#faf7f2] border border-[#c8beb1] rounded-2xl px-4 py-3.5 text-sm text-[#26211d] focus:outline-none focus:ring-2 focus:ring-[#26211d]/20"
           >
             <option value="all">All Models</option>
-            {models.map((pedal) => (
-              <option key={pedal.pedal_id} value={pedal.pedal_id}>
-                {pedal.name}
-              </option>
-            ))}
+            {models.map((p) => <option key={p.pedal_id} value={p.pedal_id}>{p.name}</option>)}
           </select>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-8">
           <select
             value={typeFilter}
-            onChange={(e) => {
-              setTypeFilter(e.target.value)
-              setSubtypeFilter('all')
-            }}
-            className="cursor-pointer bg-[#faf7f2] border border-[#c8beb1] rounded-2xl px-4 py-4 text-[#26211d]"
+            onChange={(e) => { setTypeFilter(e.target.value); setSubtypeFilter('all') }}
+            className="cursor-pointer bg-[#faf7f2] border border-[#c8beb1] rounded-2xl px-4 py-3.5 text-sm text-[#26211d] focus:outline-none focus:ring-2 focus:ring-[#26211d]/20"
           >
             <option value="all">All Types</option>
-            {types.map((type) => (
-              <option key={type.type_id} value={type.type_id}>
-                {type.type}
-              </option>
-            ))}
+            {types.map((t) => <option key={t.type_id} value={t.type_id}>{t.type}</option>)}
           </select>
 
           <select
             value={subtypeFilter}
             onChange={(e) => setSubtypeFilter(e.target.value)}
-            className="cursor-pointer bg-[#faf7f2] border border-[#c8beb1] rounded-2xl px-4 py-4 text-[#26211d]"
+            className="cursor-pointer bg-[#faf7f2] border border-[#c8beb1] rounded-2xl px-4 py-3.5 text-sm text-[#26211d] focus:outline-none focus:ring-2 focus:ring-[#26211d]/20"
           >
             <option value="all">All Subtypes</option>
-            {subtypes.map((subtype) => (
-              <option key={subtype.subtype_id} value={subtype.subtype_id}>
-                {subtype.subtype}
-              </option>
-            ))}
+            {subtypes.map((s) => <option key={s.subtype_id} value={s.subtype_id}>{s.subtype}</option>)}
           </select>
         </div>
 
         {/* GRID */}
-        <div className="grid grid-cols-2 gap-4">
-          {pedals.map((pedal) => {
-            const imageUrl = `https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/pedal_images/${pedal.image_path}`
+        {loading ? (
+          <div className="grid grid-cols-2 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : pedals.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-4xl mb-4">🎛</p>
+            <p className="text-[#26211d] font-serif text-xl mb-2">No pedals found</p>
+            <p className="text-[#5b544c] text-sm">Try adjusting your filters.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            {pedals.map((pedal) => {
+              const imageUrl = `https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/pedal_images/${pedal.image_path}`
+              return (
+                <div
+                  key={pedal.pedal_id}
+                  className="cursor-pointer"
+                  onClick={() => goToPedal(pedal.pedal_id)}
+                >
+                  <div className="bg-[#faf7f2] rounded-[2rem] p-4 border border-[#ebe6df] hover:border-[#c8beb1] transition-colors">
+                    {/* Image */}
+                    <div className="bg-[#f3efe8] rounded-[1.5rem] h-44 flex items-center justify-center mb-4">
+                      <img
+                        src={imageUrl}
+                        alt={pedal.name}
+                        className="h-36 w-full object-contain"
+                        loading="lazy"
+                      />
+                    </div>
 
-            return (
-              <div
-                key={pedal.pedal_id}
-                className="cursor-pointer"
-                onClick={() => {
-                  sessionStorage.setItem('discover_scrollY', window.scrollY.toString())
-                  sessionStorage.setItem('discover_filters', JSON.stringify({
-                    brand: brandFilter,
-                    model: modelFilter,
-                    type: typeFilter,
-                    subtype: subtypeFilter,
-                  }))
-                  sessionStorage.setItem('pedal_back', 'discover')
-                  router.push(`/pedal/${pedal.pedal_id}`)
-                }}
-              >
-                <div className="bg-[#faf7f2] rounded-[2rem] p-4 border border-[#ebe6df]">
-                  <div className="bg-[#f3efe8] rounded-[1.5rem] h-44 flex items-center justify-center mb-4">
-                    <img
-                      src={imageUrl}
-                      alt={pedal.name}
-                      className="h-32 object-contain"
-                    />
-                  </div>
+                    {/* Brand */}
+                    <p className="text-[10px] uppercase tracking-[0.25em] text-[#8a7e72] mb-1">
+                      {pedal.brand_name}
+                    </p>
 
-                  <p className="text-[10px] uppercase tracking-[0.25em] text-[#5b544c] mb-2">
-                    {pedal.brand_name}
-                  </p>
-                  <h2 className="text-2xl font-serif font-medium text-[#26211d] leading-none mb-3">
-                    {pedal.name}
-                  </h2>
+                    {/* Name */}
+                    <h2 className="text-xl font-serif font-medium text-[#26211d] leading-snug mb-2">
+                      {pedal.name}
+                    </h2>
 
-                  <div className="mb-4 space-y-1">
-                    <p className="text-xs text-[#3a342e]">{pedal.type_name}</p>
-                    <p className="text-xs text-[#5b544c]">{pedal.subtype_name}</p>
-                  </div>
+                    {/* Type / Subtype */}
+                    <div className="mb-4">
+                      <p className="text-[13px] text-[#3a342e]">{pedal.type_name}</p>
+                      <p className="text-[11px] text-[#8a7e72]">{pedal.subtype_name}</p>
+                    </div>
 
-                  <div
-                    className="flex flex-wrap gap-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      onClick={() => setStatus(pedal.pedal_id, 'have')}
-                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
-                        pedal.status === 'have'
-                          ? 'bg-[#26211d] text-[#f8f5ef]'
-                          : 'bg-[#faf7f2] border border-[#c8beb1]'
-                      }`}
+                    {/* Status buttons */}
+                    <div
+                      className="flex flex-wrap gap-1.5"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      Have
-                    </button>
-                    <button
-                      onClick={() => setStatus(pedal.pedal_id, 'had')}
-                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
-                        pedal.status === 'had'
-                          ? 'bg-[#26211d] text-[#f8f5ef]'
-                          : 'bg-[#faf7f2] border border-[#c8beb1]'
-                      }`}
-                    >
-                      Had
-                    </button>
-                    <button
-                      onClick={() => setStatus(pedal.pedal_id, 'want')}
-                      className={`cursor-pointer text-sm font-medium px-3 py-2 rounded-full ${
-                        pedal.status === 'want'
-                          ? 'bg-[#26211d] text-[#f8f5ef]'
-                          : 'bg-[#faf7f2] border border-[#c8beb1]'
-                      }`}
-                    >
-                      Want
-                    </button>
+                      {(['have', 'had', 'want'] as const).map((s) => {
+                        const active = pedal.status === s
+                        const isSaving = saving === `${pedal.pedal_id}-${s}`
+                        return (
+                          <button
+                            key={s}
+                            disabled={!!saving}
+                            onClick={() => setStatus(pedal.pedal_id, s)}
+                            className={`cursor-pointer text-xs font-medium px-3 py-1.5 rounded-full capitalize transition-all duration-150 ${
+                              active
+                                ? 'bg-[#26211d] text-[#f8f5ef] scale-95'
+                                : 'bg-[#faf7f2] border border-[#c8beb1] text-[#26211d] hover:bg-[#f3efe8]'
+                            } ${isSaving ? 'opacity-50' : ''}`}
+                          >
+                            {isSaving ? '···' : (active ? `✓ ${s}` : s)}
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        )}
 
-        {/* NAV */}
+        {/* BOTTOM NAV */}
         <div className="fixed bottom-0 left-0 right-0 bg-[#f5f1ea]/95 backdrop-blur border-t border-[#e8e1d8]">
-          <div className="max-w-md mx-auto flex justify-around py-4 text-sm">
-            <Link href="/discover" className="cursor-pointer text-[#26211d] font-medium">
-              Discover
+          <div className="max-w-md mx-auto flex justify-around py-3 text-sm">
+            <Link href="/discover" className="flex flex-col items-center gap-0.5 text-[#26211d] font-medium">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <span className="text-[10px] uppercase tracking-widest">Discover</span>
             </Link>
-            <Link href="/collection" className="cursor-pointer text-[#5b544c]">
-              Collection
+            <Link href="/collection" className="flex flex-col items-center gap-0.5 text-[#8a7e72]">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+              </svg>
+              <span className="text-[10px] uppercase tracking-widest">Collection</span>
             </Link>
           </div>
         </div>
 
         <div className="h-24" />
       </div>
+
+      {/* TOAST */}
+      <Toast message={toast.message} visible={toast.visible} />
     </main>
   )
 }
