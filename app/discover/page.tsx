@@ -200,7 +200,7 @@ export default function DiscoverPage() {
     if (existing) {
       if (existing.status === status) {
         await supabase.from('user_pedals').delete().eq('pedal_id', pedalId)
-        showToast('Deleted from your collection')
+        showToast('Removed from your collection')
       } else {
         await supabase.from('user_pedals').update({ status }).eq('pedal_id', pedalId)
         showToast(`Moved to "${status}"`)
