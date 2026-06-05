@@ -171,7 +171,7 @@ export default async function PedalDetailPage({
 
         {/* STATUS BUTTONS — client component (necesita interactividad) */}
         <div className="mb-8">
-          <StatusButtons pedalId={pedal.pedal_id} initialStatus={currentStatus} />
+          <StatusButtons pedalId={pedal.pedal_id} initialStatus={''} />
         </div>
 
         {/* COMMUNITY STATS */}
