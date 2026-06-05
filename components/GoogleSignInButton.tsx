@@ -9,12 +9,16 @@ interface Props {
 
 export function GoogleSignInButton({ className, children }: Props) {
   async function handleClick() {
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/discover`,
       },
     })
+
+    if (error) {
+      console.error(error)
+    }
   }
 
   return (
