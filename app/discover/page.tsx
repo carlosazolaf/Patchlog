@@ -24,7 +24,7 @@ interface Brand  { brand_id: number; brand: string }
 interface Type   { type_id: number; type: string }
 interface Subtype { subtype_id: number; subtype: string }
 
-type StatusKey = 'all' | 'have' | 'had' | 'want'
+type StatusKey = 'All' | 'Have' | 'Had' | 'Want'
 
 // ─── Skeleton card ─────────────────────────────────────────────────────────────
 
@@ -81,7 +81,7 @@ export default function DiscoverPage() {
   const [types, setTypes]           = useState<Type[]>([])
   const [subtypes, setSubtypes]     = useState<Subtype[]>([])
   const [loading, setLoading]       = useState(true)
-  const [counts, setCounts]         = useState<Record<StatusKey, number>>({ all: 0, have: 0, had: 0, want: 0 })
+  const [counts, setCounts]         = useState<Record<StatusKey, number>>({ All: 0, Have: 0, Had: 0, Want: 0 })
   const [pendingScroll, setPendingScroll] = useState<number | null>(null)
 
   // Toast
@@ -171,9 +171,9 @@ export default function DiscoverPage() {
     ])
     setCounts({
       all:  userPedalsData.length,
-      have: userPedalsData.filter((p) => p.status === 'have').length,
-      had:  userPedalsData.filter((p) => p.status === 'had').length,
-      want: userPedalsData.filter((p) => p.status === 'want').length,
+      have: userPedalsData.filter((p) => p.status === 'Have').length,
+      had:  userPedalsData.filter((p) => p.status === 'Had').length,
+      want: userPedalsData.filter((p) => p.status === 'Want').length,
     })
 
     setLoading(false)
@@ -253,7 +253,7 @@ export default function DiscoverPage() {
 
           {/* Status chips — informational only; styled differently from filter buttons */}
           <div className="flex flex-wrap gap-2">
-            {(['all', 'have', 'had', 'want'] as StatusKey[]).map((s) => (
+            {(['All', 'Have', 'Had', 'Want'] as StatusKey[]).map((s) => (
               <div
                 key={s}
                 className="px-3 py-2 rounded-full text-xs font-medium capitalize bg-[#f3efe8] border border-[#ddd7ce] text-[#5b544c]"
@@ -358,7 +358,7 @@ export default function DiscoverPage() {
                       className="flex flex-wrap gap-1.5"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {(['have', 'had', 'want'] as const).map((s) => {
+                      {(['Have', 'Had', 'Want'] as const).map((s) => {
                         const active = pedal.status === s
                         const isSaving = saving === `${pedal.pedal_id}-${s}`
                         return (
