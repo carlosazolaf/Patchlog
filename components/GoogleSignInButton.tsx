@@ -18,6 +18,7 @@ export function GoogleSignInButton({ className, children }: Props) {
 
     if (error) {
       console.error(error)
+      alert(error.message)
     }
   }
 
