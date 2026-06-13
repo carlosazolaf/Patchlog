@@ -17,8 +17,7 @@ export default async function CollectionPage() {
     redirect('/login')
   }
 
-  // Fetch pedales del usuario con info completa del pedal
-  const { data: userPedals, error } = await supabase
+  const { data: rawPedals, error } = await supabase
     .from('user_pedals')
     .select(`
       status,
@@ -40,7 +39,18 @@ export default async function CollectionPage() {
     console.error('Error fetching collection:', error)
   }
 
-  // Fetch perfil del usuario para el Share modal
+  const userPedals = (rawPedals ?? []).map((up) => ({
+    ...up,
+    pedals: up.pedals
+      ? {
+          ...up.pedals,
+          brand: Array.isArray(up.pedals.brand) ? (up.pedals.brand[0] ?? null) : up.pedals.brand,
+          type: Array.isArray(up.pedals.type) ? (up.pedals.type[0] ?? null) : up.pedals.type,
+          subtype: Array.isArray(up.pedals.subtype) ? (up.pedals.subtype[0] ?? null) : up.pedals.subtype,
+        }
+      : null,
+  }))
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('username')
@@ -49,7 +59,7 @@ export default async function CollectionPage() {
 
   return (
     <CollectionClient
-      userPedals={userPedals ?? []}
+      userPedals={userPedals}
       username={profile?.username ?? null}
     />
   )
