@@ -24,7 +24,15 @@ interface Brand  { brand_id: number; brand: string }
 interface Type   { type_id: number; type: string }
 interface Subtype { subtype_id: number; subtype: string }
 
-type StatusKey = 'all' | 'have' | 'had' | 'want'
+type StatusKey = 'all' | 'have' | 'had' | 'want' | 'sell'
+
+const STATUS_LABELS: Record<StatusKey, string> = {
+  all: 'all',
+  have: 'have',
+  had: 'had',
+  want: 'want',
+  sell: 'for sale',
+}
 
 // ─── Skeleton card ─────────────────────────────────────────────────────────────
 
@@ -81,7 +89,7 @@ export default function DiscoverPage() {
   const [types, setTypes]           = useState<Type[]>([])
   const [subtypes, setSubtypes]     = useState<Subtype[]>([])
   const [loading, setLoading]       = useState(true)
-  const [counts, setCounts]         = useState<Record<StatusKey, number>>({ all: 0, have: 0, had: 0, want: 0 })
+  const [counts, setCounts]         = useState<Record<StatusKey, number>>({ all: 0, have: 0, had: 0, want: 0, sell: 0 })
   const [pendingScroll, setPendingScroll] = useState<number | null>(null)
 
   // Toast
@@ -174,6 +182,7 @@ export default function DiscoverPage() {
       have: userPedalsData.filter((p) => p.status === 'have').length,
       had:  userPedalsData.filter((p) => p.status === 'had').length,
       want: userPedalsData.filter((p) => p.status === 'want').length,
+      sell: userPedalsData.filter((p) => p.status === 'sell').length,
     })
 
     setLoading(false)
@@ -253,12 +262,16 @@ export default function DiscoverPage() {
 
           {/* Status chips — informational only; styled differently from filter buttons */}
           <div className="flex flex-wrap gap-2">
-            {(['all', 'have', 'had', 'want'] as StatusKey[]).map((s) => (
+            {(['all', 'have', 'had', 'want', 'sell'] as StatusKey[]).map((s) => (
               <div
                 key={s}
-                className="px-3 py-2 rounded-full text-xs font-medium capitalize bg-[#f3efe8] border border-[#ddd7ce] text-[#5b544c]"
+                className={`px-3 py-2 rounded-full text-xs font-medium capitalize ${
+                  s === 'sell'
+                    ? 'bg-[#fff3df] border border-amber-200 text-amber-700'
+                    : 'bg-[#f3efe8] border border-[#ddd7ce] text-[#5b544c]'
+                }`}
               >
-                {s} <span className="font-semibold text-[#26211d]">{counts[s]}</span>
+                {STATUS_LABELS[s]} <span className={`font-semibold ${s === 'sell' ? 'text-amber-700' : 'text-[#26211d]'}`}>{counts[s]}</span>
               </div>
             ))}
           </div>
@@ -358,9 +371,10 @@ export default function DiscoverPage() {
                       className="flex flex-wrap gap-1.5"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {(['have', 'had', 'want'] as const).map((s) => {
+                      {(['have', 'had', 'want', 'sell'] as const).map((s) => {
                         const active = pedal.status === s
                         const isSaving = saving === `${pedal.pedal_id}-${s}`
+                        const isSell = s === 'sell'
                         return (
                           <button
                             key={s}
@@ -368,11 +382,15 @@ export default function DiscoverPage() {
                             onClick={() => setStatus(pedal.pedal_id, s)}
                             className={`cursor-pointer text-xs font-medium px-3 py-1.5 rounded-full capitalize transition-all duration-150 ${
                               active
-                                ? 'bg-[#26211d] text-[#f8f5ef] scale-95'
-                                : 'bg-[#faf7f2] border border-[#c8beb1] text-[#26211d] hover:bg-[#f3efe8]'
+                                ? isSell
+                                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm shadow-amber-500/30 scale-95'
+                                  : 'bg-[#26211d] text-[#f8f5ef] scale-95'
+                                : isSell
+                                  ? 'border border-amber-300 bg-[#fff8ec] text-amber-700 hover:bg-amber-50'
+                                  : 'bg-[#faf7f2] border border-[#c8beb1] text-[#26211d] hover:bg-[#f3efe8]'
                             } ${isSaving ? 'opacity-50' : ''}`}
                           >
-                            {isSaving ? '···' : (active ? `✓ ${s}` : s)}
+                            {isSaving ? '···' : (active ? `✓ ${STATUS_LABELS[s]}` : STATUS_LABELS[s])}
                           </button>
                         )
                       })}
