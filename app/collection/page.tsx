@@ -36,7 +36,7 @@ export default async function CollectionPage() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login')
+    redirect('/')
   }
 
   const { data: rawData, error } = await supabase
