@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import ShareModal from '@/app/components/ShareModal'
 
 type Status = 'have' | 'had' | 'want' | 'sell'
 
@@ -49,7 +48,7 @@ const STATUS_LABELS: Record<Status, string> = {
 
 export default function CollectionClient({ userPedals, username }: Props) {
   const [activeTab, setActiveTab] = useState<Status | 'all'>('all')
-  const [shareOpen, setShareOpen] = useState(false)
+  
 
   const filtered =
     activeTab === 'all'
@@ -84,7 +83,7 @@ export default function CollectionClient({ userPedals, username }: Props) {
           </div>
 
           <button
-            onClick={() => setShareOpen(true)}
+            onClick={() => {}}
             className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-700 hover:text-zinc-100"
           >
             <svg
@@ -212,12 +211,7 @@ export default function CollectionClient({ userPedals, username }: Props) {
       </div>
 
       {/* Share Modal */}
-      {shareOpen && (
-        <ShareModal
-          username={username}
-          onClose={() => setShareOpen(false)}
-        />
-      )}
+      
     </div>
   )
 }
