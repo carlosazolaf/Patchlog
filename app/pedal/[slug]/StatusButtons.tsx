@@ -68,12 +68,20 @@ export default function StatusButtons({ pedalId, initialStatus }: Props) {
     setSaving(null)
   }
 
+  const LABELS: Record<string, string> = {
+    have: 'have',
+    had: 'had',
+    want: 'want',
+    sell: 'for sale',
+  }
+
   return (
     <>
       <div className="flex gap-2">
-        {(['have', 'had', 'want'] as const).map((s) => {
+        {(['have', 'had', 'want', 'sell'] as const).map((s) => {
           const active    = status === s
           const isSaving  = saving === s
+          const isSell    = s === 'sell'
 
           return (
             <button
@@ -82,11 +90,15 @@ export default function StatusButtons({ pedalId, initialStatus }: Props) {
               onClick={() => handleStatus(s)}
               className={`flex-1 py-3.5 rounded-full text-sm font-medium capitalize transition-all duration-200 ${
                 active
-                  ? 'bg-[#26211d] text-[#f8f5ef] scale-[0.97]'
-                  : 'bg-[#faf7f2] border border-[#c8beb1] text-[#26211d] hover:bg-[#f3efe8]'
+                  ? isSell
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md shadow-amber-500/30 scale-[0.97]'
+                    : 'bg-[#26211d] text-[#f8f5ef] scale-[0.97]'
+                  : isSell
+                    ? 'border border-amber-300 bg-[#fff8ec] text-amber-700 hover:bg-amber-50'
+                    : 'bg-[#faf7f2] border border-[#c8beb1] text-[#26211d] hover:bg-[#f3efe8]'
               } ${isSaving ? 'opacity-50' : ''}`}
             >
-              {isSaving ? '···' : active ? `✓ ${s}` : s}
+              {isSaving ? '···' : active ? `✓ ${LABELS[s]}` : LABELS[s]}
             </button>
           )
         })}
