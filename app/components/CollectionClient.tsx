@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import ShareModal from '@/components/ShareModal'
+import ShareModal from '@/app/components/ShareModal'
 
 type Status = 'have' | 'had' | 'want' | 'sell'
 
