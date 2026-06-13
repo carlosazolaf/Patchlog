@@ -81,7 +81,7 @@ export default function DiscoverPage() {
   const [types, setTypes]           = useState<Type[]>([])
   const [subtypes, setSubtypes]     = useState<Subtype[]>([])
   const [loading, setLoading]       = useState(true)
-  const [counts, setCounts]         = useState<Record<StatusKey, number>>({ All: 0, Have: 0, Had: 0, Want: 0 })
+  const [counts, setCounts]         = useState<Record<StatusKey, number>>({ all: 0, have: 0, had: 0, want: 0 })
   const [pendingScroll, setPendingScroll] = useState<number | null>(null)
 
   // Toast
