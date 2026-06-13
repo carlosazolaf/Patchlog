@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import CollectionClient from '@/components/CollectionClient'
+import CollectionClient from '@/app/components/CollectionClient'
 
 export const metadata = {
   title: 'My Collection — Patchlog',
