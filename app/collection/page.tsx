@@ -6,6 +6,28 @@ export const metadata = {
   title: 'My Collection — Patchlog',
 }
 
+type RawPedal = {
+  id: string
+  slug: string
+  name: string
+  image_url: string | null
+  brand: { name: string }[] | { name: string } | null
+  type: { name: string }[] | { name: string } | null
+  subtype: { name: string }[] | { name: string } | null
+}
+
+type RawUserPedal = {
+  status: 'have' | 'had' | 'want' | 'sell'
+  updated_at: string
+  pedals: RawPedal[] | RawPedal | null
+}
+
+function toSingle<T>(val: T[] | T | null): T | null {
+  if (val === null || val === undefined) return null
+  if (Array.isArray(val)) return val[0] ?? null
+  return val
+}
+
 export default async function CollectionPage() {
   const supabase = await createClient()
 
@@ -17,7 +39,7 @@ export default async function CollectionPage() {
     redirect('/login')
   }
 
-  const { data: rawPedals, error } = await supabase
+  const { data: rawData, error } = await supabase
     .from('user_pedals')
     .select(`
       status,
@@ -39,17 +61,26 @@ export default async function CollectionPage() {
     console.error('Error fetching collection:', error)
   }
 
-  const userPedals = (rawPedals ?? []).map((up) => ({
-    ...up,
-    pedals: up.pedals
-      ? {
-          ...up.pedals,
-          brand: Array.isArray(up.pedals.brand) ? (up.pedals.brand[0] ?? null) : up.pedals.brand,
-          type: Array.isArray(up.pedals.type) ? (up.pedals.type[0] ?? null) : up.pedals.type,
-          subtype: Array.isArray(up.pedals.subtype) ? (up.pedals.subtype[0] ?? null) : up.pedals.subtype,
-        }
-      : null,
-  }))
+  const raw = (rawData ?? []) as unknown as RawUserPedal[]
+
+  const userPedals = raw.map((up) => {
+    const pedal = toSingle(up.pedals)
+    return {
+      status: up.status,
+      updated_at: up.updated_at,
+      pedals: pedal
+        ? {
+            id: pedal.id,
+            slug: pedal.slug,
+            name: pedal.name,
+            image_url: pedal.image_url,
+            brand: toSingle(pedal.brand),
+            type: toSingle(pedal.type),
+            subtype: toSingle(pedal.subtype),
+          }
+        : null,
+    }
+  })
 
   const { data: profile } = await supabase
     .from('profiles')
