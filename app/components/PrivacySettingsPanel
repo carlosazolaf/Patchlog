@@ -1,0 +1,194 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface PrivacySettings {
+  public_have: boolean
+  public_had:  boolean
+  public_want: boolean
+  public_sell: boolean
+}
+
+// ─── Toggle row ───────────────────────────────────────────────────────────────
+
+function ToggleRow({
+  label,
+  description,
+  value,
+  onChange,
+  accent,
+  locked,
+}: {
+  label: string
+  description: string
+  value: boolean
+  onChange: (v: boolean) => void
+  accent?: 'green'
+  locked?: boolean   // Sell siempre es "público" — puedes optar por bloquearlo
+}) {
+  return (
+    <div className="flex items-center justify-between py-4 border-b border-[#ede8e1] last:border-0">
+      <div className="flex-1 mr-4">
+        <p className={`text-sm font-medium ${accent === 'green' ? 'text-[#2d6a4f]' : 'text-[#26211d]'}`}>
+          {label}
+        </p>
+        <p className="text-xs text-[#8a7e72] mt-0.5 leading-relaxed">{description}</p>
+      </div>
+
+      <button
+        onClick={() => !locked && onChange(!value)}
+        className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+          value
+            ? accent === 'green' ? 'bg-[#2d6a4f]' : 'bg-[#26211d]'
+            : 'bg-[#c8beb1]'
+        } ${locked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+            value ? 'translate-x-5' : 'translate-x-0'
+          }`}
+        />
+      </button>
+    </div>
+  )
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
+export default function PrivacySettingsPanel() {
+  const [settings, setSettings] = useState<PrivacySettings | null>(null)
+  const [loading, setLoading]   = useState(true)
+  const [saving, setSaving]     = useState(false)
+  const [saved, setSaved]       = useState(false)
+  const [userId, setUserId]     = useState<string | null>(null)
+  const [username, setUsername] = useState<string>('')
+
+  useEffect(() => {
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setLoading(false); return }
+      setUserId(user.id)
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, public_have, public_had, public_want, public_sell')
+        .eq('user_id', user.id)
+        .single()
+
+      if (profile) {
+        setUsername(profile.username)
+        setSettings({
+          public_have: profile.public_have,
+          public_had:  profile.public_had,
+          public_want: profile.public_want,
+          public_sell: profile.public_sell,
+        })
+      }
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  function update(key: keyof PrivacySettings, value: boolean) {
+    setSettings((prev) => prev ? { ...prev, [key]: value } : prev)
+  }
+
+  async function save() {
+    if (!userId || !settings) return
+    setSaving(true)
+    await supabase.from('profiles').update(settings).eq('user_id', userId)
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  if (loading) {
+    return (
+      <div className="animate-pulse space-y-4">
+        {[1,2,3,4].map(i => (
+          <div key={i} className="flex justify-between items-center py-4">
+            <div className="space-y-1.5">
+              <div className="h-4 w-24 bg-[#ede9e2] rounded" />
+              <div className="h-3 w-40 bg-[#ede9e2] rounded" />
+            </div>
+            <div className="w-11 h-6 bg-[#ede9e2] rounded-full" />
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (!userId || !settings) {
+    return (
+      <p className="text-sm text-[#5b544c] py-4">Sign in to manage your privacy settings.</p>
+    )
+  }
+
+  const profileUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/u/${username}`
+    : `/u/${username}`
+
+  return (
+    <div>
+      {/* Profile URL */}
+      <div className="bg-[#f3efe8] border border-[#ddd7ce] rounded-2xl px-4 py-3 mb-6 flex items-center gap-2">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} className="text-[#8a7e72] shrink-0">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+        <span className="text-xs text-[#5b544c] truncate flex-1">{profileUrl}</span>
+        <button
+          onClick={() => navigator.clipboard.writeText(profileUrl)}
+          className="shrink-0 text-xs font-medium text-[#26211d] bg-white border border-[#c8beb1] px-2.5 py-1 rounded-full"
+        >
+          Copy
+        </button>
+      </div>
+
+      {/* Toggles */}
+      <div className="bg-[#faf7f2] border border-[#e7dfd3] rounded-[1.5rem] px-5 mb-6">
+        <ToggleRow
+          label="Have — visible publicly"
+          description="Visitors can see the pedals you currently own."
+          value={settings.public_have}
+          onChange={(v) => update('public_have', v)}
+        />
+        <ToggleRow
+          label="Had — visible publicly"
+          description="Visitors can see the pedals you've owned in the past."
+          value={settings.public_had}
+          onChange={(v) => update('public_had', v)}
+        />
+        <ToggleRow
+          label="Want — visible publicly"
+          description="Visitors can see your wishlist."
+          value={settings.public_want}
+          onChange={(v) => update('public_want', v)}
+        />
+        <ToggleRow
+          label="For Sale — visible publicly"
+          description="Anyone with the link can see your listings."
+          value={settings.public_sell}
+          onChange={(v) => update('public_sell', v)}
+          accent="green"
+        />
+      </div>
+
+      {/* Save */}
+      <button
+        onClick={save}
+        disabled={saving}
+        className={`w-full py-4 rounded-full text-sm font-medium transition-all ${
+          saved
+            ? 'bg-[#2d6a4f] text-white'
+            : 'bg-[#26211d] text-[#f8f5ef] hover:bg-[#3a342e]'
+        } ${saving ? 'opacity-60' : ''}`}
+      >
+        {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save privacy settings'}
+      </button>
+    </div>
+  )
+}
