@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/server'
 import BackButton from './BackButton'
 import StatusButtons from './StatusButtons'
 
@@ -89,11 +90,10 @@ export default async function PedalDetailPage({
 
   /*
     CURRENT USER STATUS
-    Con SSO activo: obtén el user_id del servidor y filtra userPedals por ese id.
-    Por ahora queda vacío hasta integrar auth.
   */
-  const currentStatus: string = userPedals?.find(() => true)?.status ?? ''
-  // TODO: reemplazar por → userPedals?.find(p => p.user_id === session.user.id)?.status ?? ''
+  const sb = await createClient()
+  const { data: { user } } = await sb.auth.getUser()
+  const currentStatus: string = userPedals?.find((p) => p.user_id === user?.id)?.status ?? ''
 
   /*
     IMAGE
@@ -171,7 +171,7 @@ export default async function PedalDetailPage({
 
         {/* STATUS BUTTONS — client component (necesita interactividad) */}
         <div className="mb-8">
-          <StatusButtons pedalId={pedal.pedal_id} initialStatus={''} />
+          <StatusButtons pedalId={pedal.pedal_id} initialStatus={currentStatus} />
         </div>
 
         {/* COMMUNITY STATS */}

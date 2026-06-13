@@ -42,27 +42,48 @@ export default function StatusButtons({ pedalId, initialStatus }: Props) {
   async function handleStatus(newStatus: string) {
     setSaving(newStatus)
 
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      showToast('Sign in to save pedals to your collection')
+      setSaving(null)
+      return
+    }
+
     const { data: existing } = await supabase
       .from('user_pedals')
       .select('*')
       .eq('pedal_id', pedalId)
+      .eq('user_id', user.id)
       .maybeSingle()
+
+    let error = null
 
     if (existing) {
       if (existing.status === newStatus) {
         // Toggle off
-        await supabase.from('user_pedals').delete().eq('pedal_id', pedalId)
-        setStatus('')
-        showToast('Removed from collection')
+        ;({ error } = await supabase.from('user_pedals').delete().eq('pedal_id', pedalId).eq('user_id', user.id))
+        if (!error) {
+          setStatus('')
+          showToast('Removed from collection')
+        }
       } else {
-        await supabase.from('user_pedals').update({ status: newStatus }).eq('pedal_id', pedalId)
-        setStatus(newStatus)
-        showToast(`Moved to "${newStatus}"`)
+        ;({ error } = await supabase.from('user_pedals').update({ status: newStatus }).eq('pedal_id', pedalId).eq('user_id', user.id))
+        if (!error) {
+          setStatus(newStatus)
+          showToast(`Moved to "${newStatus}"`)
+        }
       }
     } else {
-      await supabase.from('user_pedals').insert({ pedal_id: pedalId, status: newStatus })
-      setStatus(newStatus)
-      showToast(`Added to "${newStatus}"`)
+      ;({ error } = await supabase.from('user_pedals').insert({ pedal_id: pedalId, status: newStatus, user_id: user.id }))
+      if (!error) {
+        setStatus(newStatus)
+        showToast(`Added to "${newStatus}"`)
+      }
+    }
+
+    if (error) {
+      console.error(error)
+      showToast('Something went wrong — try again')
     }
 
     setSaving(null)

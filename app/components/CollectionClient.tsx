@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import ShareModal from '@/app/components/ShareModal'
+import UserBadge from '@/app/components/UserBadge'
 
 type Status = 'have' | 'had' | 'want' | 'sell'
 
@@ -81,9 +82,12 @@ export default function CollectionClient({ userPedals, username }: Props) {
 
           <div className="flex items-start justify-between mb-4 gap-3">
             <div className="min-w-0">
-              <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none mb-2">
-                My Collection
-              </h1>
+              <div className="flex items-center gap-2 mb-2">
+                <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none">
+                  My Collection
+                </h1>
+                <UserBadge />
+              </div>
               <p className="text-[#5b544c] text-base">
                 {userPedals.length} {userPedals.length === 1 ? 'pedal' : 'pedals'}
               </p>

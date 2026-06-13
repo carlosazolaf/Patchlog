@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import UserBadge from '@/app/components/UserBadge'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -134,6 +135,8 @@ export default function DiscoverPage() {
   const fetchData = useCallback(async () => {
     setLoading(true)
 
+    const { data: { user } } = await supabase.auth.getUser()
+
     // Run all independent queries in parallel
     const [brandsRes, typesRes, subtypesRes, userPedalsRes] = await Promise.all([
       supabase.from('brand').select('*').order('brand', { ascending: true }),
@@ -158,18 +161,20 @@ export default function DiscoverPage() {
     const brandsData    = brandsRes.data    || []
     const typesData     = typesRes.data     || []
     const subtypesData  = subtypesRes.data  || []
-    const userPedalsData = userPedalsRes.data || []
+    // Only this user's collection statuses — Discover shows the full catalog,
+    // but per-card status badges must reflect the signed-in user only.
+    const myUserPedals = (userPedalsRes.data || []).filter((p) => p.user_id === user?.id)
 
     const enriched: Pedal[] = (pedalsData || []).map((pedal) => ({
       ...pedal,
       brand_name:   brandsData.find((b) => Number(b.brand_id)   === Number(pedal.brand_id))?.brand    || '',
       type_name:    typesData.find((t)  => Number(t.type_id)    === Number(pedal.type_id))?.type      || '',
       subtype_name: subtypesData.find((s) => Number(s.subtype_id) === Number(pedal.subtype_id))?.subtype || '',
-      status:       userPedalsData.find((u) => Number(u.pedal_id) === Number(pedal.pedal_id))?.status || '',
+      status:       myUserPedals.find((u) => Number(u.pedal_id) === Number(pedal.pedal_id))?.status || '',
     }))
 
     setPedals(enriched)
-    setUserPedals(userPedalsData)
+    setUserPedals(myUserPedals)
     setBrands(brandsData)
     setTypes([
       ...new Map(enriched.map((p) => [p.type_id, { type_id: p.type_id, type: p.type_name }])).values(),
@@ -178,11 +183,11 @@ export default function DiscoverPage() {
       ...new Map(enriched.map((p) => [p.subtype_id, { subtype_id: p.subtype_id, subtype: p.subtype_name }])).values(),
     ])
     setCounts({
-      all:  userPedalsData.length,
-      have: userPedalsData.filter((p) => p.status === 'have').length,
-      had:  userPedalsData.filter((p) => p.status === 'had').length,
-      want: userPedalsData.filter((p) => p.status === 'want').length,
-      sell: userPedalsData.filter((p) => p.status === 'sell').length,
+      all:  myUserPedals.length,
+      have: myUserPedals.filter((p) => p.status === 'have').length,
+      had:  myUserPedals.filter((p) => p.status === 'had').length,
+      want: myUserPedals.filter((p) => p.status === 'want').length,
+      sell: myUserPedals.filter((p) => p.status === 'sell').length,
     })
 
     setLoading(false)
@@ -204,19 +209,32 @@ export default function DiscoverPage() {
     const key = `${pedalId}-${status}`
     setSaving(key)
 
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      showToast('Sign in to save pedals to your collection')
+      setSaving(null)
+      return
+    }
+
     const existing = userPedals.find((p) => Number(p.pedal_id) === Number(pedalId))
+    let error = null
 
     if (existing) {
       if (existing.status === status) {
-        await supabase.from('user_pedals').delete().eq('pedal_id', pedalId)
-        showToast('Removed from Collection')
+        ;({ error } = await supabase.from('user_pedals').delete().eq('pedal_id', pedalId).eq('user_id', user.id))
+        if (!error) showToast('Removed from Collection')
       } else {
-        await supabase.from('user_pedals').update({ status }).eq('pedal_id', pedalId)
-        showToast(`Moved to "${status}"`)
+        ;({ error } = await supabase.from('user_pedals').update({ status }).eq('pedal_id', pedalId).eq('user_id', user.id))
+        if (!error) showToast(`Moved to "${status}"`)
       }
     } else {
-      await supabase.from('user_pedals').insert({ pedal_id: pedalId, status })
-      showToast(`Added to "${status}"`)
+      ;({ error } = await supabase.from('user_pedals').insert({ pedal_id: pedalId, status, user_id: user.id }))
+      if (!error) showToast(`Added to "${status}"`)
+    }
+
+    if (error) {
+      console.error(error)
+      showToast('Something went wrong — try again')
     }
 
     setSaving(null)
@@ -253,9 +271,12 @@ export default function DiscoverPage() {
             alt="Patchlog"
             className="w-[92%] mx-auto object-contain mb-5 pt-4"
           />
-          <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none mb-2">
-            Discover
-          </h1>
+          <div className="flex items-start justify-between gap-3 mb-2">
+            <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none">
+              Discover
+            </h1>
+            <UserBadge />
+          </div>
           <p className="text-[#5b544c] text-base mb-4">
             Explore the world of pedals.
           </p>
