@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import FollowButton from '@/app/components/FollowButton'
+import UserBadge from '@/app/components/UserBadge'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -184,7 +185,10 @@ export default function FeedPage() {
               className="w-[92%] mx-auto object-contain mb-5"
             />
           </Link>
-          <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none mb-1">Community</h1>
+          <div className="flex items-start justify-between gap-3 mb-1">
+            <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none">Community</h1>
+            <UserBadge />
+          </div>
           <p className="text-sm text-[#5b544c]">Find collectors and catch up on their activity.</p>
         </div>
 

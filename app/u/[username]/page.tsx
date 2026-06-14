@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import FollowButton from '@/app/components/FollowButton'
+import UserBadge from '@/app/components/UserBadge'
 
 // ─── Metadata ─────────────────────────────────────────────────────────────────
 
@@ -102,6 +103,37 @@ function PedalSection({
   )
 }
 
+// ─── Bottom nav ────────────────────────────────────────────────────────────────
+
+function BottomNav() {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-[#f5f1ea]/95 backdrop-blur border-t border-[#e8e1d8]">
+      <div className="max-w-md mx-auto flex justify-around py-3 text-sm">
+        <Link href="/discover" className="flex flex-col items-center gap-0.5 text-[#8a7e72]">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <span className="text-[10px] uppercase tracking-widest">Discover</span>
+        </Link>
+        <Link href="/collection" className="flex flex-col items-center gap-0.5 text-[#8a7e72]">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+          </svg>
+          <span className="text-[10px] uppercase tracking-widest">Collection</span>
+        </Link>
+        <Link href="/feed" className="flex flex-col items-center gap-0.5 text-[#8a7e72]">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <span className="text-[10px] uppercase tracking-widest">Community</span>
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function UserProfilePage({
@@ -145,13 +177,18 @@ export default async function UserProfilePage({
     return (
       <main className="min-h-screen bg-[#f5f1ea] flex justify-center">
         <div className="w-full max-w-md px-6 py-8">
+          <div className="flex justify-end mb-2">
+            <UserBadge />
+          </div>
           <ProfileHeader profile={profile} followerCount={followerCount ?? 0} />
           <div className="text-center py-16">
             <p className="text-4xl mb-3">🔒</p>
             <p className="font-serif text-xl text-[#26211d] mb-2">This collection is private</p>
-            <p className="text-sm text-[#5b544c]">{profile.display_name ?? profile.username} hasn't made their pedals public yet.</p>
+            <p className="text-sm text-[#5b544c]">{profile.display_name ?? profile.username} hasn&apos;t made their pedals public yet.</p>
           </div>
+          <div className="h-24" />
         </div>
+        <BottomNav />
       </main>
     )
   }
@@ -192,6 +229,9 @@ export default async function UserProfilePage({
 
         {/* Logo */}
         <div className="mb-8">
+          <div className="flex justify-end mb-2">
+            <UserBadge />
+          </div>
           <Link href="/discover">
             <img
               src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
@@ -245,9 +285,64 @@ export default async function UserProfilePage({
           </Link>
         </div>
 
-        <div className="h-12" />
+        <div className="h-24" />
       </div>
+      <BottomNav />
     </main>
+  )
+}
+
+// ─── Social links ──────────────────────────────────────────────────────────────
+
+function SocialLinks({ profile }: { profile: { instagram?: string | null; twitter?: string | null; website?: string | null } }) {
+  if (!profile.instagram && !profile.twitter && !profile.website) return null
+
+  return (
+    <div className="flex items-center gap-3 mt-2">
+      {profile.instagram && (
+        <a
+          href={`https://instagram.com/${profile.instagram}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Instagram"
+          className="text-[#8a7e72] hover:text-[#26211d] transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+          </svg>
+        </a>
+      )}
+      {profile.twitter && (
+        <a
+          href={`https://x.com/${profile.twitter}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="X / Twitter"
+          className="text-[#8a7e72] hover:text-[#26211d] transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.736l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+        </a>
+      )}
+      {profile.website && (
+        <a
+          href={profile.website}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Website"
+          className="text-[#8a7e72] hover:text-[#26211d] transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </svg>
+        </a>
+      )}
+    </div>
   )
 }
 
@@ -264,6 +359,7 @@ function ProfileHeader({ profile, followerCount }: { profile: any; followerCount
           <h1 className="text-xl font-serif font-medium text-[#26211d] leading-tight">{displayName}</h1>
           <p className="text-xs text-[#8a7e72]">@{profile.username}</p>
           {profile.bio && <p className="text-sm text-[#5b544c] mt-1 max-w-[200px]">{profile.bio}</p>}
+          <SocialLinks profile={profile} />
         </div>
       </div>
 

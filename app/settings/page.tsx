@@ -19,7 +19,7 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('username')
+    .select('username, instagram, twitter, website')
     .eq('user_id', user.id)
     .maybeSingle()
 
@@ -27,6 +27,9 @@ export default async function SettingsPage() {
     <SettingsForm
       email={user.email ?? ''}
       initialUsername={profile?.username ?? ''}
+      initialInstagram={profile?.instagram ?? ''}
+      initialTwitter={profile?.twitter ?? ''}
+      initialWebsite={profile?.website ?? ''}
     />
   )
 }

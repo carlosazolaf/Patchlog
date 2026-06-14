@@ -23,14 +23,21 @@ function Toast({ message, visible }: { message: string; visible: boolean }) {
 interface Props {
   email: string
   initialUsername: string
+  initialInstagram: string
+  initialTwitter: string
+  initialWebsite: string
 }
 
 const USERNAME_RE = /^[A-Za-z0-9_.-]{3,20}$/
+const HANDLE_RE   = /^[A-Za-z0-9_.]{1,30}$/
 
-export default function SettingsForm({ email, initialUsername }: Props) {
-  const [username, setUsername] = useState(initialUsername)
-  const [saving, setSaving]     = useState(false)
-  const [toast, setToast]       = useState({ message: '', visible: false })
+export default function SettingsForm({ email, initialUsername, initialInstagram, initialTwitter, initialWebsite }: Props) {
+  const [username, setUsername]   = useState(initialUsername)
+  const [instagram, setInstagram] = useState(initialInstagram)
+  const [twitter, setTwitter]     = useState(initialTwitter)
+  const [website, setWebsite]     = useState(initialWebsite)
+  const [saving, setSaving]       = useState(false)
+  const [toast, setToast]         = useState({ message: '', visible: false })
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function showToast(msg: string) {
@@ -47,6 +54,23 @@ export default function SettingsForm({ email, initialUsername }: Props) {
       return
     }
 
+    const cleanInstagram = instagram.trim().replace(/^@/, '')
+    if (cleanInstagram && !HANDLE_RE.test(cleanInstagram)) {
+      showToast('Instagram: letters, numbers, _ . only')
+      return
+    }
+
+    const cleanTwitter = twitter.trim().replace(/^@/, '')
+    if (cleanTwitter && !HANDLE_RE.test(cleanTwitter)) {
+      showToast('X/Twitter: letters, numbers, _ . only')
+      return
+    }
+
+    let cleanWebsite = website.trim()
+    if (cleanWebsite && !/^https?:\/\//i.test(cleanWebsite)) {
+      cleanWebsite = `https://${cleanWebsite}`
+    }
+
     setSaving(true)
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -56,6 +80,13 @@ export default function SettingsForm({ email, initialUsername }: Props) {
       return
     }
 
+    const payload = {
+      username: clean,
+      instagram: cleanInstagram || null,
+      twitter: cleanTwitter || null,
+      website: cleanWebsite || null,
+    }
+
     const { data: existing } = await supabase
       .from('profiles')
       .select('user_id')
@@ -63,8 +94,8 @@ export default function SettingsForm({ email, initialUsername }: Props) {
       .maybeSingle()
 
     const { error } = existing
-      ? await supabase.from('profiles').update({ username: clean }).eq('user_id', user.id)
-      : await supabase.from('profiles').insert({ user_id: user.id, username: clean })
+      ? await supabase.from('profiles').update(payload).eq('user_id', user.id)
+      : await supabase.from('profiles').insert({ user_id: user.id, ...payload })
 
     setSaving(false)
 
@@ -75,6 +106,9 @@ export default function SettingsForm({ email, initialUsername }: Props) {
     }
 
     setUsername(clean)
+    setInstagram(cleanInstagram)
+    setTwitter(cleanTwitter)
+    setWebsite(cleanWebsite)
     showToast('Saved')
   }
 
@@ -130,6 +164,43 @@ export default function SettingsForm({ email, initialUsername }: Props) {
             <p className="mt-2 text-xs text-[#8a7e72]">
               Your collection will be shareable at /u/{username.trim() || 'username'}
             </p>
+          </div>
+
+          <div>
+            <label className="block text-[10px] uppercase tracking-[0.2em] text-[#8a7e72] mb-2">
+              Social links <span className="text-[#c8beb1]">(optional)</span>
+            </label>
+
+            <div className="space-y-2.5">
+              <div className="relative">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[#8a7e72]">@</span>
+                <input
+                  value={instagram}
+                  onChange={(e) => setInstagram(e.target.value)}
+                  placeholder="Instagram"
+                  maxLength={30}
+                  className="w-full bg-[#faf7f2] border border-[#c8beb1] rounded-2xl pl-8 pr-4 py-3.5 text-sm text-[#26211d] focus:outline-none focus:ring-2 focus:ring-[#26211d]/20"
+                />
+              </div>
+
+              <div className="relative">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[#8a7e72]">@</span>
+                <input
+                  value={twitter}
+                  onChange={(e) => setTwitter(e.target.value)}
+                  placeholder="X / Twitter"
+                  maxLength={30}
+                  className="w-full bg-[#faf7f2] border border-[#c8beb1] rounded-2xl pl-8 pr-4 py-3.5 text-sm text-[#26211d] focus:outline-none focus:ring-2 focus:ring-[#26211d]/20"
+                />
+              </div>
+
+              <input
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                placeholder="Website (yourdomain.com)"
+                className="w-full bg-[#faf7f2] border border-[#c8beb1] rounded-2xl px-4 py-3.5 text-sm text-[#26211d] focus:outline-none focus:ring-2 focus:ring-[#26211d]/20"
+              />
+            </div>
           </div>
 
           <button
