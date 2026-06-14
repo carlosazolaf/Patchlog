@@ -56,13 +56,20 @@ export default function SettingsForm({ email, initialUsername }: Props) {
       return
     }
 
-    const { error } = await supabase
+    const { data: existing } = await supabase
       .from('profiles')
-      .upsert({ user_id: user.id, username: clean }, { onConflict: 'user_id' })
+      .select('user_id')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    const { error } = existing
+      ? await supabase.from('profiles').update({ username: clean }).eq('user_id', user.id)
+      : await supabase.from('profiles').insert({ user_id: user.id, username: clean })
 
     setSaving(false)
 
     if (error) {
+      console.error('profiles save error:', error)
       showToast(error.code === '23505' ? 'That username is already taken' : 'Something went wrong — try again')
       return
     }
