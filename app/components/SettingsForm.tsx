@@ -25,7 +25,7 @@ interface Props {
   initialUsername: string
 }
 
-const USERNAME_RE = /^[a-z0-9_]{3,20}$/
+const USERNAME_RE = /^[A-Za-z0-9_.-]{3,20}$/
 
 export default function SettingsForm({ email, initialUsername }: Props) {
   const [username, setUsername] = useState(initialUsername)
@@ -40,10 +40,10 @@ export default function SettingsForm({ email, initialUsername }: Props) {
   }
 
   async function handleSave() {
-    const clean = username.trim().toLowerCase()
+    const clean = username.trim()
 
     if (!USERNAME_RE.test(clean)) {
-      showToast('Username: 3-20 chars, a-z, 0-9, _')
+      showToast('Username: 3-20 chars — letters, numbers, _ . -')
       return
     }
 
@@ -119,7 +119,7 @@ export default function SettingsForm({ email, initialUsername }: Props) {
               className="w-full bg-[#faf7f2] border border-[#c8beb1] rounded-2xl px-4 py-3.5 text-sm text-[#26211d] focus:outline-none focus:ring-2 focus:ring-[#26211d]/20"
             />
             <p className="mt-2 text-xs text-[#8a7e72]">
-              Your collection will be shareable at /u/{username.trim().toLowerCase() || 'username'}
+              Your collection will be shareable at /u/{username.trim() || 'username'}
             </p>
           </div>
 
