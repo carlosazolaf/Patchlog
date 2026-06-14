@@ -119,11 +119,13 @@ export default async function PedalDetailPage({
 
         {/* LOGO */}
         <div className="mb-6">
-          <img
-            src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
-            alt="Patchlog"
-            className="w-[92%] mx-auto object-contain"
-          />
+          <Link href="/discover">
+            <img
+              src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
+              alt="Patchlog"
+              className="w-[92%] mx-auto object-contain"
+            />
+          </Link>
         </div>
 
         {/* BACK — client component para leer sessionStorage */}

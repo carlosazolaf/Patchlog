@@ -84,11 +84,13 @@ export default function SettingsForm({ email, initialUsername }: Props) {
 
         {/* HEADER */}
         <div className="pb-4 mb-6">
-          <img
-            src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
-            alt="Patchlog"
-            className="w-[92%] mx-auto object-contain mb-5 pt-4"
-          />
+          <Link href="/discover">
+            <img
+              src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
+              alt="Patchlog"
+              className="w-[92%] mx-auto object-contain mb-5 pt-4"
+            />
+          </Link>
 
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none">

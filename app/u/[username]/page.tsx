@@ -132,12 +132,12 @@ export default async function UserProfilePage({
     .select('pedal_id, status')
     .eq('user_id', profile.user_id)
 
-  // Filtra según privacidad del perfil
+  // Filtra según privacidad del perfil (por defecto visible salvo que se oculte explícitamente)
   const visibleEntries = (userPedalsRaw || []).filter((up) => {
-    if (up.status === 'have' && !profile.public_have) return false
-    if (up.status === 'had'  && !profile.public_had)  return false
-    if (up.status === 'want' && !profile.public_want) return false
-    if (up.status === 'sell' && !profile.public_sell) return false
+    if (up.status === 'have' && profile.public_have === false) return false
+    if (up.status === 'had'  && profile.public_had  === false) return false
+    if (up.status === 'want' && profile.public_want === false) return false
+    if (up.status === 'sell' && profile.public_sell === false) return false
     return true
   })
 
@@ -192,11 +192,13 @@ export default async function UserProfilePage({
 
         {/* Logo */}
         <div className="mb-8">
-          <img
-            src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
-            alt="Patchlog"
-            className="w-[70%] mx-auto object-contain"
-          />
+          <Link href="/discover">
+            <img
+              src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
+              alt="Patchlog"
+              className="w-[70%] mx-auto object-contain"
+            />
+          </Link>
         </div>
 
         {/* Profile header */}
@@ -205,10 +207,10 @@ export default async function UserProfilePage({
         {/* Stats summary */}
         <div className="grid grid-cols-4 gap-2 mb-10">
           {[
-            { label: 'Have', count: have.length,  show: profile.public_have },
-            { label: 'Had',  count: had.length,   show: profile.public_had  },
-            { label: 'Want', count: want.length,  show: profile.public_want },
-            { label: 'Sell', count: sell.length,  show: profile.public_sell, green: true },
+            { label: 'Have', count: have.length,  show: profile.public_have !== false },
+            { label: 'Had',  count: had.length,   show: profile.public_had  !== false },
+            { label: 'Want', count: want.length,  show: profile.public_want !== false },
+            { label: 'Sell', count: sell.length,  show: profile.public_sell !== false, green: true },
           ].filter((s) => s.show).map(({ label, count, green }) => (
             <div
               key={label}
@@ -223,16 +225,16 @@ export default async function UserProfilePage({
         </div>
 
         {/* Sections */}
-        {profile.public_sell && (
+        {profile.public_sell !== false && (
           <PedalSection title="For Sale" pedals={sell} emptyMsg="Nothing for sale" accent="green" />
         )}
-        {profile.public_have && (
+        {profile.public_have !== false && (
           <PedalSection title="Have" pedals={have} emptyMsg="No pedals" />
         )}
-        {profile.public_had && (
+        {profile.public_had !== false && (
           <PedalSection title="Had" pedals={had} emptyMsg="No pedals" />
         )}
-        {profile.public_want && (
+        {profile.public_want !== false && (
           <PedalSection title="Want" pedals={want} emptyMsg="No pedals" />
         )}
 

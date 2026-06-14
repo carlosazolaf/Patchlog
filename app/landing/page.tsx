@@ -35,11 +35,13 @@ export default async function LandingPage() {
 
         {/* LOGO */}
         <div className="pt-12 pb-2">
-          <img
-            src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
-            alt="Patchlog"
-            className="w-[80%] mx-auto object-contain"
-          />
+          <Link href="/discover">
+            <img
+              src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
+              alt="Patchlog"
+              className="w-[80%] mx-auto object-contain"
+            />
+          </Link>
         </div>
 
         {/* HERO */}

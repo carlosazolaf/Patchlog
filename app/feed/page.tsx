@@ -125,11 +125,13 @@ export default function FeedPage() {
 
         {/* Header */}
         <div className="mb-8">
-          <img
-            src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
-            alt="Patchlog"
-            className="w-[92%] mx-auto object-contain mb-5"
-          />
+          <Link href="/discover">
+            <img
+              src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
+              alt="Patchlog"
+              className="w-[92%] mx-auto object-contain mb-5"
+            />
+          </Link>
           <h1 className="text-3xl font-serif font-medium text-[#26211d] leading-none mb-1">Feed</h1>
           <p className="text-sm text-[#5b544c]">Recent activity from people you follow.</p>
         </div>

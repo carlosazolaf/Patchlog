@@ -71,11 +71,13 @@ export default function CollectionClient({ userPedals, username }: Props) {
 
         {/* HEADER */}
         <div className="sticky top-0 z-10 bg-[#f5f1ea] pb-4 mb-4">
-          <img
-            src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
-            alt="Patchlog"
-            className="w-[92%] mx-auto object-contain mb-5 pt-4"
-          />
+          <Link href="/discover">
+            <img
+              src="https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/logo/patchlogo.png"
+              alt="Patchlog"
+              className="w-[92%] mx-auto object-contain mb-5 pt-4"
+            />
+          </Link>
 
           <div className="flex items-start justify-between mb-4 gap-3">
             <div className="min-w-0">
