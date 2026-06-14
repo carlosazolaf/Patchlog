@@ -34,7 +34,7 @@ export default async function CollectionPage() {
     supabase.from('brand').select('*'),
     supabase.from('type').select('*'),
     supabase.from('subtype').select('*'),
-    supabase.from('profiles').select('username').eq('id', user.id).single(),
+    supabase.from('profiles').select('username').eq('user_id', user.id).maybeSingle(),
     pedalIds.length > 0
       ? supabase.from('pedals').select('*').in('pedal_id', pedalIds)
       : Promise.resolve({ data: [] as Record<string, unknown>[] }),

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 
 type Tab = 'collection' | 'forsale'
 
@@ -130,7 +131,11 @@ export default function ShareModal({ username, onClose }: Props) {
 
         {!username && (
           <p className="mt-3 text-center text-xs text-[#8a7e72]">
-            Add a username in settings to share your profile.
+            Add a username in{' '}
+            <Link href="/settings" className="underline underline-offset-2 hover:text-[#26211d]">
+              settings
+            </Link>{' '}
+            to share your profile.
           </p>
         )}
       </div>
