@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import FollowButton from './FollowButton'
+import FollowButton from '@/app/components/FollowButton'
 
 // ─── Metadata ─────────────────────────────────────────────────────────────────
 
