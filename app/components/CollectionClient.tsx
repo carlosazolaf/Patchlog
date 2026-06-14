@@ -10,15 +10,12 @@ type Status = 'have' | 'had' | 'want' | 'sell'
 type UserPedal = {
   status: Status
   updated_at: string
-  pedals: {
-    id: string
-    slug: string
-    name: string
-    image_url: string | null
-    brand: { name: string } | null
-    type: { name: string } | null
-    subtype: { name: string } | null
-  } | null
+  pedal_id: number
+  name: string
+  image_path: string
+  brand_name: string
+  type_name: string
+  subtype_name: string
 }
 
 type Props = {
@@ -152,42 +149,22 @@ export default function CollectionClient({ userPedals, username }: Props) {
         ) : (
           <div className="grid grid-cols-2 gap-4">
             {filtered.map((up) => {
-              if (!up.pedals) return null
-              const pedal = up.pedals
+              const imageUrl = `https://wwdbhjmslvspllmzoflo.supabase.co/storage/v1/object/public/pedal_images/${up.image_path}`
               return (
                 <Link
-                  key={`${pedal.id}-${up.status}`}
-                  href={`/pedal/${pedal.slug}`}
+                  key={`${up.pedal_id}-${up.status}`}
+                  href={`/pedal/${up.pedal_id}`}
                   className="block"
                 >
                   <div className="bg-[#faf7f2] rounded-[2rem] p-4 border border-[#ebe6df] hover:border-[#c8beb1] transition-colors">
                     {/* Image */}
                     <div className="relative bg-[#f3efe8] rounded-[1.5rem] h-32 flex items-center justify-center mb-4 overflow-hidden">
-                      {pedal.image_url ? (
-                        <img
-                          src={pedal.image_url}
-                          alt={pedal.name}
-                          className="h-28 w-full object-contain"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="28"
-                          height="28"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="text-[#c8beb1]"
-                        >
-                          <rect x="3" y="3" width="18" height="18" rx="2" />
-                          <circle cx="8.5" cy="8.5" r="1.5" />
-                          <polyline points="21 15 16 10 5 21" />
-                        </svg>
-                      )}
+                      <img
+                        src={imageUrl}
+                        alt={up.name}
+                        className="h-28 w-full object-contain"
+                        loading="lazy"
+                      />
 
                       <span
                         className={`absolute top-2 right-2 rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_STYLES[up.status]}`}
@@ -198,14 +175,14 @@ export default function CollectionClient({ userPedals, username }: Props) {
 
                     {/* Info */}
                     <p className="text-[10px] uppercase tracking-[0.25em] text-[#8a7e72] mb-1 truncate">
-                      {pedal.brand?.name ?? '—'}
+                      {up.brand_name || '—'}
                     </p>
                     <h2 className="text-lg font-serif font-medium text-[#26211d] leading-snug truncate">
-                      {pedal.name}
+                      {up.name}
                     </h2>
-                    {(pedal.type || pedal.subtype) && (
+                    {(up.type_name || up.subtype_name) && (
                       <p className="mt-1 text-[11px] text-[#8a7e72] truncate">
-                        {[pedal.type?.name, pedal.subtype?.name]
+                        {[up.type_name, up.subtype_name]
                           .filter(Boolean)
                           .join(' · ')}
                       </p>

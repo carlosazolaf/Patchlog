@@ -6,28 +6,6 @@ export const metadata = {
   title: 'My Collection — Patchlog',
 }
 
-type RawPedal = {
-  id: string
-  slug: string
-  name: string
-  image_url: string | null
-  brand: { name: string }[] | { name: string } | null
-  type: { name: string }[] | { name: string } | null
-  subtype: { name: string }[] | { name: string } | null
-}
-
-type RawUserPedal = {
-  status: 'have' | 'had' | 'want' | 'sell'
-  updated_at: string
-  pedals: RawPedal[] | RawPedal | null
-}
-
-function toSingle<T>(val: T[] | T | null): T | null {
-  if (val === null || val === undefined) return null
-  if (Array.isArray(val)) return val[0] ?? null
-  return val
-}
-
 export default async function CollectionPage() {
   const supabase = await createClient()
 
@@ -39,21 +17,9 @@ export default async function CollectionPage() {
     redirect('/')
   }
 
-  const { data: rawData, error } = await supabase
+  const { data: userPedalsRaw, error } = await supabase
     .from('user_pedals')
-    .select(`
-      status,
-      updated_at,
-      pedals (
-        id,
-        slug,
-        name,
-        image_url,
-        brand (name),
-        type (name),
-        subtype (name)
-      )
-    `)
+    .select('pedal_id, status, updated_at')
     .eq('user_id', user.id)
     .order('updated_at', { ascending: false })
 
@@ -61,37 +27,52 @@ export default async function CollectionPage() {
     console.error('Error fetching collection:', error)
   }
 
-  const raw = (rawData ?? []) as unknown as RawUserPedal[]
+  const entries = userPedalsRaw || []
+  const pedalIds = entries.map((e) => e.pedal_id)
 
-  const userPedals = raw.map((up) => {
-    const pedal = toSingle(up.pedals)
-    return {
-      status: up.status,
-      updated_at: up.updated_at,
-      pedals: pedal
-        ? {
-            id: pedal.id,
-            slug: pedal.slug,
-            name: pedal.name,
-            image_url: pedal.image_url,
-            brand: toSingle(pedal.brand),
-            type: toSingle(pedal.type),
-            subtype: toSingle(pedal.subtype),
-          }
-        : null,
-    }
-  })
+  const [brandsRes, typesRes, subtypesRes, profileRes, pedalsRes] = await Promise.all([
+    supabase.from('brand').select('*'),
+    supabase.from('type').select('*'),
+    supabase.from('subtype').select('*'),
+    supabase.from('profiles').select('username').eq('id', user.id).single(),
+    pedalIds.length > 0
+      ? supabase.from('pedals').select('*').in('pedal_id', pedalIds)
+      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+  ])
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('username')
-    .eq('id', user.id)
-    .single()
+  const brands   = brandsRes.data   || []
+  const types    = typesRes.data    || []
+  const subtypes = subtypesRes.data || []
+  const pedals   = (pedalsRes.data  || []) as {
+    pedal_id: number
+    name: string
+    image_path: string
+    brand_id: number
+    type_id: number
+    subtype_id: number
+  }[]
+
+  const userPedals = entries
+    .map((entry) => {
+      const pedal = pedals.find((p) => Number(p.pedal_id) === Number(entry.pedal_id))
+      if (!pedal) return null
+      return {
+        status: entry.status,
+        updated_at: entry.updated_at,
+        pedal_id: pedal.pedal_id,
+        name: pedal.name,
+        image_path: pedal.image_path,
+        brand_name:   brands.find((b)   => Number(b.brand_id)   === Number(pedal.brand_id))?.brand     || '',
+        type_name:    types.find((t)    => Number(t.type_id)    === Number(pedal.type_id))?.type       || '',
+        subtype_name: subtypes.find((s) => Number(s.subtype_id) === Number(pedal.subtype_id))?.subtype || '',
+      }
+    })
+    .filter((up): up is NonNullable<typeof up> => up !== null)
 
   return (
     <CollectionClient
       userPedals={userPedals}
-      username={profile?.username ?? null}
+      username={profileRes.data?.username ?? null}
     />
   )
 }
